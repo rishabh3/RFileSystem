@@ -1,2 +1,4 @@
 .cproject
 .project
+a.out
+*.h.gch
