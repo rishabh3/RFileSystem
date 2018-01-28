@@ -14,6 +14,15 @@
 #define NUM_INDIRECT_POINTERS 1 << 9
 #define INODES_PER_BLOCK 1 << 7
 
+#define F_TYPE 0x00
+#define DIR_TYPE 0x01
+
+struct timestamp{
+	unsigned long int ctime; // When the particular inode was changed. Stored in Epoch
+	unsigned long int mtime; // when the file contents were modified Stored in Epoch
+	unsigned long int atime; // when the file was accessed. Stored in Epoch
+};
+
 struct rfs_superblock{
     int magic_num; //verify integrity of fs
     int num_blocks; // number of blocks in the fs 
@@ -24,6 +33,8 @@ struct rfs_superblock{
 struct rfs_inode{
     int isvalid; //is in use by a file
     int size; //size of the file in bytes
+    struct timestamp tstamp; //details about file creation,last use and modified
+    int type; //inode for file or dir
     int direct[POINTERS_PER_INODE]; //number of direct pointers per file    
     int indirect; //block number which stores the indirect pointers
 };
@@ -32,7 +43,7 @@ union rfs_block{
     struct rfs_superblock super;
     struct rfs_inode inode[INODES_PER_BLOCK];
     int pointers[NUM_INDIRECT_POINTERS];
-    char data[BLK_SIZE];
+    char buffer[BLK_SIZE - sizeof(int)];
 };
 
 void rfs_debug(); /* scan a mounted fs and prints info on superblock and each inode */
