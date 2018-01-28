@@ -49,7 +49,7 @@ void disk_read(int block_num, char * data){
 	/* Disk Read fuctionality */
 
 	sanity_check(block_num, data, READ);
-	if(memdisk[block_num].in_use == IN_USE){
+	if(memdisk[block_num].in_use != IN_USE){
 		printf("ERROR: Reading the disk at block (%d).\n", block_num);
 		abort();
 	}

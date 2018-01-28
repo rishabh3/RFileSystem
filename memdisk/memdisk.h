@@ -14,6 +14,7 @@
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
 
+
 struct memdisk;
 
 extern struct memdisk{
@@ -23,8 +24,8 @@ extern struct memdisk{
 // This is the in memory disk for storage emulator.
 
 int disk_size(); // Return the remaining size of the disk.
-void disk_read(int ,union rfs_block *); // Read from the disk.
-void disk_write(int ,union rfs_block *, int); // Write to the disk.
+void disk_read(int ,char *); // Read from the disk.
+void disk_write(int ,char *); // Write to the disk.
 
 
 #endif /* MEMDISK_MEMDISK_H_ */
