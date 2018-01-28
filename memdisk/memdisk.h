@@ -2,7 +2,7 @@
  * memdisk.h
  *
  *  Created on: 28-Jan-2018
- *      Author: risha
+ *      Author: rishabh
  */
 
 #ifndef MEMDISK_MEMDISK_H_
