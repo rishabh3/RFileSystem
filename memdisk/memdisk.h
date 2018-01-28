@@ -7,20 +7,25 @@
 
 #ifndef MEMDISK_MEMDISK_H_
 #define MEMDISK_MEMDISK_H_
-#include "macros.h"
-#include "../rfs/rfs.h"
+
+#define DISK_BLK_SIZE 4096
+#define NUM_BLOCKS 125000
+#define IN_USE 0x01
+#define FULL 0x02
+#define READ 1
+#define WRITE 2
 
 struct memdisk;
 
 extern struct memdisk{
-	union block block_type;
+	char disk_data[DISK_BLK_SIZE - sizeof(int)];
 	int in_use;
 }memdisk[NUM_BLOCKS];
 
-int get_next_free_inode();
+
 int disk_size();
-void disk_read(int ,union block *);
-void disk_write(int ,union block *, int);
+void disk_read(int ,union rfs_block *);
+void disk_write(int ,union rfs_block *, int);
 
 
 #endif /* MEMDISK_MEMDISK_H_ */

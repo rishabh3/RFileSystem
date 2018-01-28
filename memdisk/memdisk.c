@@ -8,12 +8,14 @@
 #include<stdio.h>
 #include<errno.h>
 #include<unistd.h>
+#include<string.h>
 #include "memdisk.h"
 
 struct memdisk memdisk[];
-static int num_blocks = 0; // This will increase when the block is completely full
-static int num_inode_blocks = 0; // This will increase when the inode block is filled and then reset when one block is completely filled
 
+static int num_blocks = 0; // This will increase when the block is completely full
+static int nreads = 0; // This will increase when the inode block is filled and then reset when one block is completely filled
+static int nwrites = 0;
 
 void sanity_check(int block_index, union block * data, int type_of_operation){
 	if(block_index < 0){
@@ -24,11 +26,7 @@ void sanity_check(int block_index, union block * data, int type_of_operation){
 		printf("ERROR: block number (%d) is greater than disk capacity", block_index);
 		abort();
 	}
-	if(memdisk[block_index].in_use == FULL){
-		printf("ERROR: block number (%d) is full", block_index);
-		abort();
-	}
-	if(type_of_operation == WRITE && !data){
+	if(WRITE && !data){
 		printf("ERROR: null pointer to data!\n");
 		abort();
 	}
@@ -38,28 +36,16 @@ int disk_size(){
 	return num_blocks;
 }
 
-int get_next_free_inode(){
-	return num_inode_blocks;
-}
-
-void disk_read(int block_num, union block * data){
+void disk_read(int block_num, char * data){
 	sanity_check(block_num, data, READ);
-	data = &memdisk[block_num].block_type;
+	memcpy(data, memdisk[block_num].disk_data, strlen(memdisk[block_num].disk_data));
+	nreads++;
 }
 
-void disk_write(int block_num, union block * data, int type){
+void disk_write(int block_num, char* data){
 	sanity_check(block_num, data, WRITE);
-	switch(type){
-		case SUPERBLOCK: memdisk[block_num].block_type = *data;
-						 memdisk[block_num].in_use = FULL;
-						 break;
-		case INODE: memdisk[block_num].block_type = *data;
-					break;
-		case DATA:  break;
-		default:	printf("ERROR: data type not found!\n");
-					break;
-	}
-
+	memcpy(memdisk[block_num].disk_data, data, strlen(data));
+	nwrites++;
 }
 
 
