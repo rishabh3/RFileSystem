@@ -17,15 +17,20 @@
 
 struct memdisk;
 
-extern struct memdisk{
+struct memdisk{
 	char disk_data[DISK_BLK_SIZE - sizeof(int)];
 	int in_use;
-}memdisk[NUM_BLOCKS];
+};
 // This is the in memory disk for storage emulator.
 
+struct memdisk *disk;
+
+struct memdisk* disk_init();
 int disk_size(); // Return the remaining size of the disk.
 void disk_read(int ,char *); // Read from the disk.
 void disk_write(int ,char *); // Write to the disk.
+void disk_unmount();
+int reset_stats();
 
 
 #endif /* MEMDISK_MEMDISK_H_ */

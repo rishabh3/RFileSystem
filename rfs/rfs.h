@@ -34,6 +34,7 @@ struct rfs_superblock{
 
 struct rfs_inode{
     int isvalid; //is in use by a file
+    int inode_num; // Inode number to be used.
     int size; //size of the file in bytes
     struct timestamp tstamp; //details about file creation,last use and modified
     int type; //inode for file or dir
@@ -61,5 +62,5 @@ int rfs_getsize(int inode_num); //returns the logical size of the inode in bytes
 int rfs_read(int inode_num,char *data,int length,int offset); //read data of 'length' bytes from an offset from an inode
 int rfs_write(int inode_num,char *data,int length,int offset); //write data of 'length' bytes from an offset
 
-
+int rfs_unmount();
 #endif /* RFS_RFS_H_ */
