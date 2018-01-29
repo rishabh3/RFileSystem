@@ -33,7 +33,7 @@ void rfs_debug(){
 	printf("	%d blocks\n", s_block.super.num_blocks);
 	printf(" 	%d inode blocks\n", s_block.super.num_inodeblocks);
 	printf(" 	%d inodes \n", s_block.super.num_inodes);
-	memset(s_block_data_frm_disk, '', BLK_SIZE);
+	memset(s_block_data_frm_disk, ' ', BLK_SIZE);
 	int first_inode_block = 1;
 	for(int i = first_inode_block;i <= s_block.super.num_inodeblocks;i++){
 		disk_read(i, s_block_data_frm_disk);
