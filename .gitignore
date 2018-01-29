@@ -2,3 +2,4 @@
 .project
 a.out
 *.h.gch
+.DS_Store
