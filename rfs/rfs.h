@@ -42,6 +42,8 @@ struct rfs_inode{
     int indirect; //block number which stores the indirect pointers
 };
 
+char *bitmap;
+
 union rfs_block{
     struct rfs_superblock super;
     struct rfs_inode inode[INODES_PER_BLOCK];

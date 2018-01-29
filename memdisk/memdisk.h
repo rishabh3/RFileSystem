@@ -8,6 +8,8 @@
 #ifndef MEMDISK_MEMDISK_H_
 #define MEMDISK_MEMDISK_H_
 
+#include "../util.h"
+
 #define DISK_BLK_SIZE 4096 // Disk Block Size
 #define NUM_BLOCKS 125000 // Total Disk Size around 500 MB
 #define IN_USE 0x01	// Flags for checking in_use or not
@@ -24,8 +26,12 @@ struct memdisk{
 // This is the in memory disk for storage emulator.
 
 struct memdisk *disk;
+bool disk_mounted;
 
 struct memdisk* disk_init();
+void disk_mount();
+void disk_unmount();
+void disk_delete();
 int disk_size(); // Return the remaining size of the disk.
 void disk_read(int ,char *); // Read from the disk.
 void disk_write(int ,char *); // Write to the disk.

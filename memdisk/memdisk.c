@@ -39,10 +39,16 @@ void sanity_check(int block_index, union block * data, int type_of_operation){
 }
 
 struct memdisk * disk_init(){
-	return (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
+	struct memdisk * disk = (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
+	return(disk);
+}
+
+void disk_mount(){
+	disk_mounted = TRUE;
 }
 
 int  reset_stats(){
+	// reset stats of the disk
 	num_blocks = 0;
 	nreads = 0;
 	nwrites = 0;
@@ -50,6 +56,12 @@ int  reset_stats(){
 }
 
 void disk_unmount(){
+	// Unmount the disk
+	disk_mounted = FALSE;
+}
+
+void delete_disk(){
+	// Delete the disk free up the memory space
 	if(!disk){
 		return ;
 	}

@@ -86,7 +86,7 @@ int unset_invalid_bit(union rfs_block *block){
 //writes a new file system onto the disk,re writes super block
 int rfs_format(){
 	int num_inodeblocks = (int)(10/100*NUM_BLOCKS); // Keeping only 10% as inodes.
-	if(!disk){
+	if(!disk || disk_mounted){
 		return 0;
 	}
 	//else clear superblock and inodes and reset it. Call reset status
@@ -96,6 +96,9 @@ int rfs_format(){
 	block.super.num_blocks = NUM_BLOCKS;
 	block.super.num_inodeblocks = num_inodeblocks;
 	block.super.num_inodes = INODES_PER_BLOCK * num_inodeblocks;
+	if(bitmap){
+		free(bitmap);
+	}
 	write_data_to_disk(SUPER_BLOCK, &block);
 	// Get all inodes and then reset the valid bits.
 	for(int i = 1;i <= num_inodeblocks;i++){
@@ -111,9 +114,15 @@ int rfs_format(){
 
 //checks if disk has filesystem, if present read the super block and build free block bitmap
 int rfs_mount(){
-	disk = disk_init();
+	disk = disk_mount();
 	if(!disk){
-		return 0;
+			return 0;
+	}
+	union rfs_block block;
+	block = get_data_frm_disk(SUPER_BLOCK);
+	bitmap = (char *)malloc(sizeof(char)*NUM_BLOCKS);
+	for(int i = 0;i < block.super.num_blocks;i++){
+		bitmap[i] = '1';
 	}
 	return 1;
 }
@@ -145,6 +154,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 
 int rfs_unmount(){
 	disk_unmount();
+	free(bitmap);
 	return 0;
 }
 
