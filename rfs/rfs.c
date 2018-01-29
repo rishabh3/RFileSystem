@@ -9,8 +9,13 @@
 #include <rfs.h>
 
 // Utility function to convert union to string.
-void convert_struct_to_string(union rfs_block *block_data, char* data){
+void convert_union_to_string(union rfs_block *block_data, char* data){
 	memcpy(data, block_data, sizeof(union rfs_block));
+}
+
+// Utility function to covert string to union.
+void convert_string_to_union(char* data, union rfs_block *block_data){
+	memcpy(block_data, data, sizeof(union rfs_block));
 }
 
 /* scan a mounted fs and prints info on superblock and each inode */
