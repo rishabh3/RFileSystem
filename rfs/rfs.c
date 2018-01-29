@@ -6,8 +6,8 @@
  */
 
 #include <string.h>
-#include <rfs.h>
-#include <../memdisk/memdisk.h>
+#include "rfs.h"
+#include "../memdisk/memdisk.h"
 
 // Utility function to convert union to string.
 void convert_union_to_string(union rfs_block *block_data, char* data){
