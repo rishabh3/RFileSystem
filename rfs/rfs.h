@@ -17,6 +17,8 @@
 #define F_TYPE 0x00
 #define DIR_TYPE 0x01
 
+#define SUPER_BLOCK 0
+
 struct timestamp{
 	unsigned long int ctime; // When the particular inode was changed. Stored in Epoch
 	unsigned long int mtime; // when the file contents were modified Stored in Epoch
