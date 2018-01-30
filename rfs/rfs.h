@@ -12,7 +12,7 @@
 #define SUPER_MAGIC 0xf0f03410
 #define POINTERS_PER_INODE 1 << 2
 #define NUM_INDIRECT_POINTERS 1 << 9
-#define INODES_PER_BLOCK 1 << 6
+#define INODES_PER_BLOCK 48
 
 #define F_TYPE 0x00
 #define DIR_TYPE 0x01
@@ -56,7 +56,7 @@ void rfs_debug(); /* scan a mounted fs and prints info on superblock and each in
 int rfs_format(); //writes a new file system onto the disk,re writes super block
 int rfs_mount(); //checks if disk has filesystem, if present read the super block and build free block bitmap
 
-int rfs_create(); //creates a new inode of zero length
+int rfs_create(int); //creates a new inode of zero length
 int rfs_delete(int inode_num); /*deletes the data held by an inode and resets for use,updates free block bitmap */
 
 int rfs_getsize(int inode_num); //returns the logical size of the inode in bytes

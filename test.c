@@ -26,7 +26,14 @@ int main(){
 		return -1;
 	}
 	printf("The disk has been mounted!\n");
-	rfs_create();
+	for(int i = 0;i <= 50;i++){
+		rfs_create(i+50);
+	}
+	//rfs_delete(1);
+	//rfs_delete(2);
+	//rfs_delete(3);
+	printf("Size of file: %d \n", rfs_getsize(1));
+	printf("Size of file: %d \n", rfs_getsize(3));
 	rfs_debug();
 	rfs_unmount();
 	rfs_format();
