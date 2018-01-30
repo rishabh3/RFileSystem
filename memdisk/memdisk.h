@@ -11,7 +11,7 @@
 #include "../util.h"
 
 #define DISK_BLK_SIZE 4096 // Disk Block Size
-#define NUM_BLOCKS 100 // Total Disk Size around 500 MB
+#define NUM_BLOCKS 100// Total Disk Size around 500 MB
 #define IN_USE 0x01	// Flags for checking in_use or not
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
