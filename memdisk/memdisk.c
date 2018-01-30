@@ -18,7 +18,7 @@ static int nreads = 0; // This will keep track of number of reads.
 static int nwrites = 0; // This will keep track of number of writes to disk.
 
 
-void sanity_check(int block_index, union block * data, int type_of_operation){
+void sanity_check(int block_index, char * data, int type_of_operation){
 
 	/*																*
 	 * Sanity Check functionality for error checking for parameters.*
@@ -38,11 +38,17 @@ void sanity_check(int block_index, union block * data, int type_of_operation){
 	}
 }
 
-struct memdisk * disk_init(){
-	return (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
+void disk_init(){
+	disk = (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
+	new_disk = TRUE;
+}
+
+void disk_mount(){
+	disk_mounted = TRUE;
 }
 
 int  reset_stats(){
+	// reset stats of the disk
 	num_blocks = 0;
 	nreads = 0;
 	nwrites = 0;
@@ -50,10 +56,17 @@ int  reset_stats(){
 }
 
 void disk_unmount(){
+	// Unmount the disk
+	disk_mounted = FALSE;
+}
+
+void delete_disk(){
+	// Delete the disk free up the memory space
 	if(!disk){
 		return ;
 	}
 	free(disk);
+	reset_stats();
 }
 
 int disk_size(){
@@ -73,25 +86,26 @@ void disk_read(int block_num, char * data){
 		abort();
 	}
 	else{
-		memcpy(data, disk[block_num].disk_data, strlen(disk[block_num].disk_data));
+		memcpy(data, disk[block_num].disk_data, sizeof(disk[block_num].disk_data));
 		nreads++;
 	}
 }
 
-void disk_write(int block_num, char* data){
+int disk_write(int block_num, char* data){
 
 	/* Disk Write Functionality */
 
 	sanity_check(block_num, data, WRITE);
 	if(disk[block_num].in_use == IN_USE){
 		printf("ERROR: Writing to the disk at block (%d).\n", block_num);
-		abort();
+		return 0;
 	}
 	else{
-		memcpy(disk[block_num].disk_data, data, strlen(data));
+		memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
 		disk[block_num].in_use = IN_USE;
 		nwrites++;
 	}
+	return 1;
 }
 
 
