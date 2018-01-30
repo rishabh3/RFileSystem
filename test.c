@@ -26,8 +26,10 @@ int main(){
 		return -1;
 	}
 	printf("The disk has been mounted!\n");
+	rfs_create();
 	rfs_debug();
 	rfs_unmount();
+	rfs_format();
 	return 0;
 }
 

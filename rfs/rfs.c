@@ -22,6 +22,15 @@ void convert_union_to_string(void *block_data, char* data, unsigned long int siz
 	data = strcat(data, "\0");
 }
 
+void manage_inode_counters(){
+	if(num_inode == INODES_PER_BLOCK-1){
+		num_inode_block++;
+		num_inode = 0;
+	}
+	else{
+		num_inode++;
+	}
+}
 // Utility function to covert string to union.
 void convert_string_to_union(char* data, void *block_data, unsigned long int size){
 	memcpy(block_data, data,  size);
@@ -55,15 +64,15 @@ void print_info(union rfs_block block, int* num_inodes){
 			printf("Inode %d: \n", i);
 			printf(" 	%d file size \n", block.inode[i].size);
 			switch(block.inode[i].type){
-				case 1: printf(" 	Regular File\n");
+				case F_TYPE: printf(" 	Regular File\n");
 						break;
-				case 2: printf("	Directory \n");
+				case DIR_TYPE: printf("	Directory \n");
 						break;
 			}
 		}
-		else{
-			printf("DEBUG: NO VALID INODE\n");
-		}
+//		else{
+//			printf("DEBUG: NO VALID INODE\n");
+//		}
 	}
 }
 
@@ -144,7 +153,7 @@ int rfs_format(){
 			convert_string_to_union(data, (&(temp.inode)), sizeof(struct rfs_inode));
 			//memcpy(&(block.inode) ,blk_data, sizeof(struct rfs_inode));
 			unset_invalid_bit(&temp);
-			if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(struct rfs_inode))){
+			if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
 				// This i think needs to be checked properly. proper testing
 				return 0;
 			}
@@ -176,7 +185,16 @@ int rfs_mount(){
 
 //creates a new inode of zero length
 int rfs_create(){
-	return 0;
+	union rfs_block block;
+	block.inode[num_inode].isvalid = 1;
+	block.inode[num_inode].inode_num = generate_new_inode_num();
+	block.inode[num_inode].size = 0;
+	block.inode[num_inode].type = F_TYPE;
+	manage_inode_counters();
+	if(!write_data_to_disk(num_inode_block+1, (void *)&(block.inode), sizeof(struct rfs_inode))){
+		return 0;
+	}
+	return 1;
 }
 
 /*deletes the data held by an inode and resets for use,updates free block bitmap */
@@ -202,6 +220,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 int rfs_unmount(){
 	disk_unmount();
 	free(bitmap);
+	bitmap = 0x00;
 	delete_disk();
 	return 0;
 }

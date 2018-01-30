@@ -15,6 +15,7 @@
 #define IN_USE 0x01	// Flags for checking in_use or not
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
+#define FREE 0x00
 
 
 struct memdisk;
