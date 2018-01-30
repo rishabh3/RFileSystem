@@ -11,7 +11,7 @@
 #include "../util.h"
 
 #define DISK_BLK_SIZE 4096 // Disk Block Size
-#define NUM_BLOCKS 125000 // Total Disk Size around 500 MB
+#define NUM_BLOCKS 100 // Total Disk Size around 500 MB
 #define IN_USE 0x01	// Flags for checking in_use or not
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
@@ -27,14 +27,15 @@ struct memdisk{
 
 struct memdisk *disk;
 bool disk_mounted;
+bool new_disk;
 
-struct memdisk* disk_init();
+void disk_init();
 void disk_mount();
 void disk_unmount();
-void disk_delete();
+void delete_disk();
 int disk_size(); // Return the remaining size of the disk.
 void disk_read(int ,char *); // Read from the disk.
-void disk_write(int ,char *); // Write to the disk.
+int disk_write(int ,char *); // Write to the disk.
 void disk_unmount();
 int reset_stats();
 

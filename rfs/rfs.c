@@ -6,6 +6,8 @@
  */
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "rfs.h"
 #include "../memdisk/memdisk.h"
 
@@ -14,12 +16,19 @@ static int num_inode_block = 0; // Current Inode Block in use keep track the ino
 static int num_inode = 0; // Current Inode in use keep track the inode in use and reset it when the inode block becomes full
 static int inode_num = 0; // Keep track of new inode num
 
-union rfs_block get_data_frm_disk(int block_num){
-	char block_data[BLK_SIZE];
-	union rfs_block kblk;
+// Utility function to convert union to string.
+void convert_union_to_string(void *block_data, char* data, unsigned long int size){
+	memcpy(data, block_data, size);
+}
+
+// Utility function to covert string to union.
+void convert_string_to_union(char* data, void *block_data){
+	memcpy(block_data, data, strlen(data));
+}
+
+
+void get_data_frm_disk(int block_num, char * block_data){
 	disk_read(block_num, block_data);
-	convert_string_to_union(block_data, &kblk);
-	return kblk;
 }
 
 int generate_new_inode_num(){
@@ -27,20 +36,13 @@ int generate_new_inode_num(){
 	return inode_num;
 }
 
-int write_data_to_disk(int block_num, union rfs_block *block){
+int write_data_to_disk(int block_num, void *block, unsigned long int size){
 	char block_data[BLK_SIZE];
-	convert_union_to_string(block, block_data);
-	disk_write(block_num, block_data);
+	convert_union_to_string(block, block_data, size);
+	if(!disk_write(block_num, block_data)){
+		return 0;
+	}
 	return 1;
-}
-// Utility function to convert union to string.
-void convert_union_to_string(union rfs_block *block_data, char* data){
-	memcpy(data, block_data, sizeof(union rfs_block));
-}
-
-// Utility function to covert string to union.
-void convert_string_to_union(char* data, union rfs_block *block_data){
-	memcpy(block_data, data, sizeof(union rfs_block));
 }
 
 void print_info(union rfs_block block, int* num_inodes){
@@ -64,47 +66,79 @@ void print_info(union rfs_block block, int* num_inodes){
 /* scan a mounted fs and prints info on superblock and each inode */
 void rfs_debug(){
 	union rfs_block s_block, temp;
-	s_block = get_data_frm_disk(SUPER_BLOCK);
+	char data[BLK_SIZE];
+	get_data_frm_disk(SUPER_BLOCK, data);
+	convert_string_to_union(data, (void*)(&s_block.super));
+	//memcpy(&(s_block.super), blk_data, sizeof(struct rfs_superblock));
 	printf("SuperBlock: \n");
 	printf("	%d blocks\n", s_block.super.num_blocks);
 	printf(" 	%d inode blocks\n", s_block.super.num_inodeblocks);
 	printf(" 	%d inodes \n", s_block.super.num_inodes);
 	int first_inode_block = 1;
+	memset(data, ' ', BLK_SIZE);
 	for(int i = first_inode_block;i <= s_block.super.num_inodeblocks;i++){
-		temp = get_data_frm_disk(i);
+		get_data_frm_disk(i, data);
+		convert_string_to_union(data, (void*)(&(temp.inode)));
+		//memcpy(&(temp.inode) ,blk_data, sizeof(struct rfs_inode)*INODES_PER_BLOCK);
 		print_info(temp, &s_block.super.num_inodes);
 	}
 }
 
-int unset_invalid_bit(union rfs_block *block){
-	if(is_set(block->inode.isvalid)){
-		block->inode.isvalid = 0;
+int unset_invalid_bit(union rfs_block *block, int index){
+	if(is_set(block->inode[index].isvalid)){
+		block->inode[index].isvalid = 0;
 	}
 	return 1;
 }
 
 //writes a new file system onto the disk,re writes super block
 int rfs_format(){
-	int num_inodeblocks = (int)(10/100*NUM_BLOCKS); // Keeping only 10% as inodes.
+	int num_inodeblocks = (int)((10*NUM_BLOCKS)/100); // Keeping only 10% as inodes.
+	union rfs_block block;
 	if(!disk || disk_mounted){
 		return 0;
 	}
-	//else clear superblock and inodes and reset it. Call reset status
-	union rfs_block block;
-	// Get superblock from disk reset it
-	block = get_data_frm_disk(SUPER_BLOCK);
-	block.super.num_blocks = NUM_BLOCKS;
-	block.super.num_inodeblocks = num_inodeblocks;
-	block.super.num_inodes = INODES_PER_BLOCK * num_inodeblocks;
-	if(bitmap){
-		free(bitmap);
+	else if(new_disk){
+		block.super.magic_num = SUPER_MAGIC;
+		block.super.num_blocks = NUM_BLOCKS;
+		block.super.num_inodeblocks = num_inodeblocks;
+		block.super.num_inodes = INODES_PER_BLOCK*num_inodeblocks;
+		if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
+			return 0;
+		}
+		for(int i = 1;i <= num_inodeblocks;i++){
+			block.inode[i].isvalid = 0;
+			if(!write_data_to_disk(i, (void *)&(block.inode), sizeof(struct rfs_inode))){
+				return 0;
+			}
+		}
+		new_disk = FALSE;
 	}
-	write_data_to_disk(SUPER_BLOCK, &block);
-	// Get all inodes and then reset the valid bits.
-	for(int i = 1;i <= num_inodeblocks;i++){
-		block = get_data_from_disk(i);
-		unset_invalid_bit(&block);
-		write_data_to_disk(i, &block);
+	else{
+		//else clear superblock and inodes and reset it. Call reset status
+		union rfs_block block;
+		// Get superblock from disk reset it
+		char data[BLK_SIZE];void * blk_data;
+		get_data_frm_disk(SUPER_BLOCK, data);
+		convert_string_to_union(data, blk_data);
+		memcpy(&(block.super), blk_data, sizeof(struct rfs_superblock));
+		block.super.num_blocks = NUM_BLOCKS;
+		block.super.num_inodeblocks = num_inodeblocks;
+		block.super.num_inodes = INODES_PER_BLOCK * num_inodeblocks;
+		if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
+			return 0;
+		}
+		memset(data, ' ', BLK_SIZE);
+		// Get all inodes and then reset the valid bits.
+		for(int i = 1;i <= num_inodeblocks;i++){
+			get_data_frm_disk(i, data);
+			convert_string_to_union(data, blk_data);
+			memcpy(&(block.inode) ,blk_data, sizeof(struct rfs_inode));
+			unset_invalid_bit(&block, i);
+			if(!write_data_to_disk(i, (void *)&(block.inode), sizeof(struct rfs_inode))){
+				return 0;
+			}
+		}
 	}
 	// Reset the stats for the disk
 	reset_stats();
@@ -114,12 +148,15 @@ int rfs_format(){
 
 //checks if disk has filesystem, if present read the super block and build free block bitmap
 int rfs_mount(){
-	disk = disk_mount();
+	disk_mount();
 	if(!disk){
 			return 0;
 	}
 	union rfs_block block;
-	block = get_data_frm_disk(SUPER_BLOCK);
+	char data[BLK_SIZE];
+	get_data_frm_disk(SUPER_BLOCK, data);
+	convert_string_to_union(data, (void*)(&block.super));
+	//memcpy(&(block.super), blk_data, sizeof(struct rfs_superblock));
 	bitmap = (char *)malloc(sizeof(char)*NUM_BLOCKS);
 	for(int i = 0;i < block.super.num_blocks;i++){
 		bitmap[i] = '1';
@@ -155,6 +192,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 int rfs_unmount(){
 	disk_unmount();
 	free(bitmap);
+	delete_disk();
 	return 0;
 }
 
