@@ -12,7 +12,7 @@
 #define SUPER_MAGIC 0xf0f03410
 #define POINTERS_PER_INODE 1 << 2
 #define NUM_INDIRECT_POINTERS 1 << 9
-#define INODES_PER_BLOCK 1 << 7
+#define INODES_PER_BLOCK 1 << 6
 
 #define F_TYPE 0x00
 #define DIR_TYPE 0x01

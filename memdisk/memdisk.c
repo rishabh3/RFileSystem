@@ -40,6 +40,9 @@ void sanity_check(int block_index, char * data, int type_of_operation){
 
 void disk_init(){
 	disk = (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
+	for(int i = 0;i < NUM_BLOCKS;i++){
+		disk->in_use = FREE;
+	}
 	new_disk = TRUE;
 }
 
@@ -66,6 +69,7 @@ void delete_disk(){
 		return ;
 	}
 	free(disk);
+	disk = 0x00;
 	reset_stats();
 	disk = NULL;
 }
@@ -97,15 +101,9 @@ int disk_write(int block_num, char* data){
 	/* Disk Write Functionality */
 
 	sanity_check(block_num, data, WRITE);
-	if(disk[block_num].in_use == IN_USE){
-		printf("ERROR: Writing to the disk at block (%d).\n", block_num);
-		return 0;
-	}
-	else{
-		memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
-		disk[block_num].in_use = IN_USE;
-		nwrites++;
-	}
+	memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
+	disk[block_num].in_use = IN_USE;
+	nwrites++;
 	return 1;
 }
 
