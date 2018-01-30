@@ -67,6 +67,7 @@ void delete_disk(){
 	}
 	free(disk);
 	reset_stats();
+	disk = NULL;
 }
 
 int disk_size(){
