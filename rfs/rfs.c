@@ -136,6 +136,7 @@ int rfs_format(){
 			memcpy(&(block.inode) ,blk_data, sizeof(struct rfs_inode));
 			unset_invalid_bit(&block, i);
 			if(!write_data_to_disk(i, (void *)&(block.inode), sizeof(struct rfs_inode))){
+				// This i think needs to be checked properly. proper testing
 				return 0;
 			}
 		}
