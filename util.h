@@ -12,6 +12,8 @@
 #define FALSE 0
 
 typedef int bool;
+typedef unsigned long int rsize_t;
+typedef unsigned long int roff_t;
 
 
 

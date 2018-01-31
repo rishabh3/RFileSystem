@@ -40,8 +40,7 @@ struct rfs_inode{
     int size; //size of the file in bytes
     struct timestamp tstamp; //details about file creation,last use and modified
     int type; //inode for file or dir
-    int direct[POINTERS_PER_INODE]; //number of direct pointers per file    
-    
+    int direct[POINTERS_PER_INODE]; //number of direct pointers per file      
     /* deprecated, we are not this skilled yet
     * int indirect; //block number which stores the indirect pointers
     */ 

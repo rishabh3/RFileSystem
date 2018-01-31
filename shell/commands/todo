@@ -1,0 +1,11 @@
+cat
+ls
+pwd
+mkdir
+rmdir
+rm
+mkfs
+touch
+cd
+clear
+exit
