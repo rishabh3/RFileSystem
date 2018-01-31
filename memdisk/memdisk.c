@@ -91,6 +91,7 @@ void delete_disk(){
 	free(disk);
 	disk = 0x00;
 	reset_stats();
+	disk = NULL;
 }
 
 int disk_size(){
