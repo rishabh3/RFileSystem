@@ -3,17 +3,6 @@
 #include"rfs/rfs.h"
 
 int main(){
-<<<<<<< HEAD
-    printf("Program to test the functionality of RFS\n");
-    disk_init();
-    rfs_format();
-    rfs_mount();
-    rfs_unmount();
-    rfs_format();
-   // rfs_debug();
-    return 0;
-}
-=======
 	disk_init();
 	/*union rfs_block block;
 	block.super.magic_num = SUPER_MAGIC;
@@ -37,4 +26,3 @@ int main(){
 	return 0;
 }
 
->>>>>>> upstream/master
