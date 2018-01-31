@@ -16,7 +16,7 @@
 static int num_blocks = 0; // This will increase when the block is completely full
 static int nreads = 0; // This will keep track of number of reads.
 static int nwrites = 0; // This will keep track of number of writes to disk.
-
+static int num_data_block = NUM_INODE_BLOCKS; // start of data block
 
 void sanity_check(int block_index, char * data, int type_of_operation){
 
@@ -38,6 +38,25 @@ void sanity_check(int block_index, char * data, int type_of_operation){
 	}
 }
 
+int get_next_free_disk_block_num(){
+	/* First Scan front from the current pointer */
+	for(int i = num_data_block;i < NUM_BLOCKS;i++){
+		if(disk[i].in_use != 1){
+			disk[i].in_use = IN_USE;
+			num_data_block = i;
+			return i;
+		}
+	}
+	/* Scan back from the current pointer */
+	for(int i = num_data_block;i > NUM_INODE_BLOCKS;i--){
+		if(disk[i].in_use != 1){
+			disk[i].in_use = IN_USE;
+			return i;
+		}
+	}
+	return -1;
+}
+
 void disk_init(){
 	disk = (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
 	for(int i = 0;i < NUM_BLOCKS;i++){
@@ -55,6 +74,7 @@ int  reset_stats(){
 	num_blocks = 0;
 	nreads = 0;
 	nwrites = 0;
+	num_data_block = NUM_INODE_BLOCKS;
 	return 1;
 }
 
