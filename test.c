@@ -19,8 +19,8 @@ int main(){
 		return -1;
 	}
 	printf("The disk has been mounted!\n");
-	for(int i = 0;i <= 50;i++){
-		rfs_create(i+50);
+	for(int i = 0;i < 48;i++){
+		rfs_create(i+48);
 	}
 	//rfs_delete(1);
 	//rfs_delete(2);
