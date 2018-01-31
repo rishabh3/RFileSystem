@@ -247,12 +247,139 @@ int rfs_getsize(int inode_num){
 
 //read data of 'length' bytes from an offset from an inode
 int rfs_read(int inode_num,char *data,int length,int offset){
-	return 0;
+
+	/*NOTE:
+	* Assumes that the direct pointers are written one after the other
+	* i.e if direct[0] is full the next data is in direct[1] and so on.
+	*/
+
+	//function will read 'length' amount of bytes into the buffer data
+	int block_index; //which inode block
+	int inode_index; //offset from the inode block
+	union rfs_block block, datablock; //union to hold the block's contents
+	seek_inode_block_inode_num(inode_num,&block_index,&inode_index); //gets the block number and inode offset	
+	
+	//set the fields of the block union
+	char buffer[BLK_SIZE]; 
+	get_data_frm_disk(block_index,buffer); //get data from the block
+	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block)); //convert it back inode format.
+	/* 
+	* POSSIBLE BUGS: memcpy may not have copied all the fields of the inode 
+	* struct correctly
+	* UPDATE: revised, using a pointer instead, so memcpy is now unnecessary
+	*/
+	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode	
+	//first step is to check if valid bit is set
+	if(!is_set(current_inode->isvalid)){
+		fprintf(stderr,"Invalid inode to read from. Inode number: %d is not in use.\n",inode_num);
+		return 0;
+	}
+	/*CURRENTLY IGNORING OFFSET
+	* FIX IN LATER REVISIONS
+	*/
+
+	//now to read 'length' bytes from an offset(?) from the direct pointers
+	int c_ptr = 0; //offset to read into in destination buffer
+	const int fetch_size = (BLK_SIZE)- sizeof(int); //the max amount of bytes each data block can hold
+	int blocks_to_read_from = length / fetch_size; //gets the number of blocks to be read from
+	int loop_var = 0; //loop variable to iterate over the required blocks to read from
+	do{
+		int bytes_read;
+		get_data_frm_disk(current_inode->direct[loop_var],buffer);
+		convert_string_to_union(buffer,(void *)&datablock.buffer,sizeof(union rfs_block));
+		if(length >= fetch_size){
+			bytes_read = fetch_size;
+		}
+		else{
+			bytes_read = length % fetch_size;
+		}
+		memcpy(data + c_ptr,datablock.buffer,bytes_read);
+		length -= bytes_read;
+		c_ptr += bytes_read;
+		loop_var ++;
+	}
+	while(loop_var < blocks_to_read_from);
+	/* 
+	 *INSERT CODE TO UPDATE TIMESTAMP HERE
+	*/
+	unsigned long int seconds = time(NULL); // To get the current time
+	current_inode->tstamp.atime = seconds;
+	if(!write_data_to_disk(block_index, (void *)&(block.inode), sizeof(union rfs_block))){
+		return 0;
+	}
+	return 1;	
 }
 
 //write data of 'length' bytes from an offset
 int rfs_write(int inode_num,char *data,int length,int offset){
-	return 0;
+	/*NOTE:
+	* Assumes that the direct pointers are written one after the other
+	* i.e if direct[0] is full the next data is in direct[1] and so on.
+	*/
+
+	//function will write 'length' amount of bytes from the buffer data
+	int block_index; //which inode block
+	int inode_index; //offset from the inode block
+	union rfs_block block, datablock; //union to hold the block's contents
+	seek_inode_block_inode_num(inode_num,&block_index,&inode_index); //gets the block number and inode offset	
+	
+	//set the fields of the block union
+	char buffer[BLK_SIZE]; 
+	get_data_frm_disk(block_index,buffer); //get data from the block
+	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block)); //convert it back inode format.
+	/* 
+	* POSSIBLE BUGS: memcpy may not have copied all the fields of the inode 
+	* struct correctly
+	* UPDATE: revised, using a pointer instead, so memcpy is now unnecessary
+	*/
+	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode	
+	//first step is to check if valid bit is set
+	if(!is_set(current_inode->isvalid)){
+		fprintf(stderr,"Invalid inode to write from. Inode number: %d is not in use.\n",inode_num);
+		return 0;
+	}
+	/*CURRENTLY IGNORING OFFSET
+	* FIX IN LATER REVISIONS
+	*/
+
+	//now to read 'length' bytes from an offset(?) from the direct pointers
+	int c_ptr = 0; //offset to write into in destination buffer
+	const int fetch_size = (BLK_SIZE)- sizeof(int); //the max amount of bytes each data block can hold
+	int blocks_to_write_into = length / fetch_size; //gets the number of blocks to write into
+	int loop_var = current_inode->allocated < POINTERS_PER_INODE ? current_inode->allocated : -1; //loop variable to iterate over the required blocks to write into
+	
+	do{
+		if(loop_var == -1){
+			fprintf(stderr,"Data cannot be written to this file.No free blocks\n");
+			return 0;
+		}
+		int bytes_written;
+		int next_block_num = get_next_free_disk_block_num();
+		current_inode->direct[loop_var] = next_block_num;
+		if(length >= fetch_size){
+			bytes_written = fetch_size;
+		}
+		else{
+			bytes_written = length % fetch_size;
+		}
+		union rfs_block d_block;
+		memcpy(&(d_block.buffer),data + c_ptr,bytes_written);
+		write_data_to_disk(next_block_num,(void *)&d_block,sizeof(union rfs_block));
+		c_ptr += bytes_written;
+		length -= bytes_written;
+		loop_var++;
+	}
+	while(loop_var < blocks_to_write_into);
+	/* 
+	 *INSERT CODE TO UPDATE TIMESTAMP HERE
+	*/
+	unsigned long int seconds = time(NULL); // To get the current time
+	current_inode->tstamp.atime = seconds;
+	current_inode->tstamp.mtime = seconds;
+	if(!write_data_to_disk(block_index, (void *)&(block.inode), sizeof(union rfs_block))){
+		return 0;
+	}
+	return 1;
 }
 
 int rfs_unmount(){

@@ -11,7 +11,9 @@
 #define BLK_SIZE 1 << 12
 #define SUPER_MAGIC 0xf0f03410
 #define POINTERS_PER_INODE 1 << 2
-//#define NUM_INDIRECT_POINTERS 1 << 9
+/* Deprecated.
+* #define NUM_INDIRECT_POINTERS 1 << 9
+*/
 #define INODES_PER_BLOCK 48
 
 #define F_TYPE 0x01
@@ -39,8 +41,10 @@ struct rfs_inode{
     struct timestamp tstamp; //details about file creation,last use and modified
     int type; //inode for file or dir
     int direct[POINTERS_PER_INODE]; //number of direct pointers per file  
-    int allocated; // Keep track of how many direct pointers are in use.  
-    //int indirect; //block number which stores the indirect pointers
+    int allocated; // To keep track of number of direct blocks in use.    
+    /* deprecated, we are not this skilled yet
+    * int indirect; //block number which stores the indirect pointers
+    */ 
 };
 
 char *bitmap;
@@ -48,8 +52,10 @@ char *bitmap;
 union rfs_block{
     struct rfs_superblock super;
     struct rfs_inode inode[INODES_PER_BLOCK];
-    //int pointers[NUM_INDIRECT_POINTERS];
-    char buffer[BLK_SIZE - sizeof(int)];
+    /* deprecated 
+    * int pointers[NUM_INDIRECT_POINTERS];
+    */
+    char buffer[(BLK_SIZE) - sizeof(int)];
 };
 
 void rfs_debug(); /* scan a mounted fs and prints info on superblock and each inode */

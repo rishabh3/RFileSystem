@@ -1,13 +1,6 @@
-/*
- * test.c
- *
- *  Created on: 29-Jan-2018
- *      Author: rishabh
- */
-
-#include <stdio.h>
-#include "rfs/rfs.h"
-#include "memdisk/memdisk.h"
+#include<stdio.h>
+#include"memdisk/memdisk.h"
+#include"rfs/rfs.h"
 
 int main(){
 	disk_init();
