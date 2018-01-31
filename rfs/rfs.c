@@ -181,6 +181,9 @@ int rfs_format(){
 
 //checks if disk has filesystem, if present read the super block and build free block bitmap
 int rfs_mount(){
+	if(new_disk){
+		return 0;
+	}
 	disk_mount();
 	if(!disk){
 			return 0;
@@ -242,10 +245,12 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 
 int rfs_unmount(){
 	disk_unmount();
-	free(bitmap);
-	bitmap = 0x00;
+	if(bitmap != NULL){
+		free(bitmap);
+		bitmap = 0x00;
+	}
 	delete_disk();
-	return 0;
+	return 1;
 }
 
 
