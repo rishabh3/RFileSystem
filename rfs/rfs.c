@@ -181,7 +181,7 @@ int rfs_format(){
 
 //checks if disk has filesystem, if present read the super block and build free block bitmap
 int rfs_mount(){
-	if(new_disk){
+	if(new_disk || disk_mounted){
 		return 0;
 	}
 	disk_mount();
@@ -193,25 +193,37 @@ int rfs_mount(){
 	get_data_frm_disk(SUPER_BLOCK, data);
 	convert_string_to_union(data, (void*)(&block.super), sizeof(struct rfs_superblock));
 	//memcpy(&(block.super), blk_data, sizeof(struct rfs_superblock));
-	bitmap = (char *)malloc(sizeof(char)*NUM_BLOCKS);
+	/*bitmap = (char *)malloc(sizeof(char)*NUM_BLOCKS);
 	for(int i = 0;i < block.super.num_blocks;i++){
 		bitmap[i] = '1';
-	}
+	}*/
 	return 1;
 }
 
 //creates a new inode of zero length
-int rfs_create(int size){
+int rfs_create(unsigned long int ctime, unsigned long int atime, unsigned long int mtime, int type){
 	union rfs_block block;
 	block.inode[num_inode].isvalid = 1;
+	block.inode[num_inode].allocated = 0;
 	block.inode[num_inode].inode_num = generate_new_inode_num();
-	block.inode[num_inode].size = size;
-	block.inode[num_inode].type = F_TYPE;
+	block.inode[num_inode].tstamp.ctime = ctime;
+	block.inode[num_inode].tstamp.atime = atime;
+	block.inode[num_inode].tstamp.mtime = mtime;
+	block.inode[num_inode].type = type;
+	if(type == DIR_TYPE){
+		block.inode[num_inode].direct[block.inode[num_inode].allocated] =
+	 	get_next_free_disk_block_num();
+		block.inode[num_inode].allocated++; 
+		block.inode[num_inode].size = BLK_SIZE;
+	}
+	else{
+		block.inode[num_inode].size = 0;
+	}
 	manage_inode_counters();
 	if(!write_data_to_disk(num_inode_block+1, (void *)&(block.inode), sizeof(union rfs_block))){
 		return 0;
 	}
-	return 1;
+	return block.inode[num_inode].inode_num;
 }
 
 /*deletes the data held by an inode and resets for use,updates free block bitmap */

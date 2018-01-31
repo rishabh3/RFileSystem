@@ -8,23 +8,24 @@
 #ifndef VRFS_VRFS_H_
 #define VRFS_VRFS_H_
 #include "../util.h"
-#define MAX_SIZE 31
+#define MAX_SIZE 32
+#define MAX_PATH_SIZE 1024
+
 
 struct dentry;
 
-
+char rootdirname[MAX_SIZE];
+char current_working_directory[MAX_PATH_SIZE];
+int rootinode;
 struct dentry{
     char name[MAX_SIZE];
     int inode_num;
 };
 
 /* File Operations */
-int touch(char* filename);
 int open(char *filename);
-int close(int filedesc);
-bool read(int filedesc, char *data, rsize_t size);
-bool write(int filedesc, char *data, rsize_t size);
-roff_t lseek(int filedesc, roff_t offset); 
+bool read(char *filename, char *data, rsize_t size);
+bool write(char *filename, char *data, rsize_t size);
 int rm_file(char* filename);
 
 /*Directory Operations*/
@@ -33,5 +34,7 @@ int make_directory(char *dirname);
 int remove_directory(char* dirname);
 struct dentry * read_dir(char *dirname);
 int change_directory(char *dirname);
+
+int make_rfs(char *username);
 
 #endif /* VRFS_VRFS_H_ */

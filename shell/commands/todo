@@ -8,4 +8,4 @@ mkfs
 touch
 cd
 clear
-exit
+exit : Done

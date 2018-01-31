@@ -10,6 +10,7 @@
 #include "commands/commands.h"
 #include "../memdisk/memdisk.h"
 #include "../rfs/rfs.h"
+#include "../vrfs/vrfs.h"
 #define MAX_LIMIT 1024
 
 int main(int argc, char *argv[]){
@@ -17,7 +18,9 @@ int main(int argc, char *argv[]){
     char cmd[MAX_LIMIT];
 	char arg1[MAX_LIMIT];
 	char arg2[MAX_LIMIT];
+    char dirpath[MAX_LIMIT];
 	int inumber, result, args;
+    dirpath[0] = ' ';
 
     if(argc != 2){
         printf("use: %s <username>\n", argv[0]);
@@ -27,7 +30,7 @@ int main(int argc, char *argv[]){
     disk_init();
     printf("opened in-memory emulated disk image.\n");
     while(1){
-        printf("rfs-%s> ", argv[1]);
+        printf("rfs%s> ", dirpath);
         fflush(stdout);
 
         if(!fgets(line,sizeof(line),stdin)) break;
@@ -49,7 +52,7 @@ int main(int argc, char *argv[]){
 			}
 		} else if(!strcmp(cmd,"mount")) {
 			if(args==1) {
-				if(rfs_mount()) {
+				if(make_rfs(argv[1])) {
 					printf("disk mounted.\n");
 				} else {
 					printf("mount failed!\n");
@@ -74,6 +77,19 @@ int main(int argc, char *argv[]){
 				rfs_debug();
 			} else {
 				printf("use: debug\n");
+			}
+		} else if(!strcmp(cmd,"mkfs")) {
+			if(args==1) {
+				if(!make_rfs(argv[1])){
+                    printf("Error in making the RFileSystem!\n");
+                }
+                else{
+                    strcat(dirpath, argv[1]);
+                    strcat(dirpath, "/");
+                    printf("RFileSystem has been made and mounted on disk!\n");
+                }
+            } else {
+				printf("use: mkfs\n");
 			}
 		} else if(!strcmp(cmd, "disksize")){
             if(args == 1){
@@ -102,7 +118,11 @@ int main(int argc, char *argv[]){
 				printf("use: getsize <inumber>\n");
 			}
 			
-		}else if(!strcmp(cmd,"help")) {
+		} else if(!strcmp(cmd,"clear")) {
+			if(args == 1){
+                system("clear");
+            } 
+    	} else if(!strcmp(cmd,"help")) {
 			printf("Commands are:\n");
 			printf("    format\n");
 			printf("    mount\n");
@@ -135,8 +155,7 @@ int main(int argc, char *argv[]){
     }
     if(disk != NULL){
         rfs_unmount();
-        printf("Disk is unmounted.\n");
-        printf("Bye\n");
+        printf("disk unmounted.\n");
     }
     return 0;
 }

@@ -14,8 +14,8 @@
 //#define NUM_INDIRECT_POINTERS 1 << 9
 #define INODES_PER_BLOCK 48
 
-#define F_TYPE 0x00
-#define DIR_TYPE 0x01
+#define F_TYPE 0x01
+#define DIR_TYPE 0x02
 
 #define SUPER_BLOCK 0
 
@@ -38,7 +38,8 @@ struct rfs_inode{
     int size; //size of the file in bytes
     struct timestamp tstamp; //details about file creation,last use and modified
     int type; //inode for file or dir
-    int direct[POINTERS_PER_INODE]; //number of direct pointers per file    
+    int direct[POINTERS_PER_INODE]; //number of direct pointers per file  
+    int allocated; // Keep track of how many direct pointers are in use.  
     //int indirect; //block number which stores the indirect pointers
 };
 
@@ -56,7 +57,7 @@ void rfs_debug(); /* scan a mounted fs and prints info on superblock and each in
 int rfs_format(); //writes a new file system onto the disk,re writes super block
 int rfs_mount(); //checks if disk has filesystem, if present read the super block and build free block bitmap
 
-int rfs_create(int); //creates a new inode of zero length
+int rfs_create(unsigned long int ctime, unsigned long int atime, unsigned long int mtime,int type); //creates a new inode of zero length
 int rfs_delete(int inode_num); /*deletes the data held by an inode and resets for use,updates free block bitmap */
 
 int rfs_getsize(int inode_num); //returns the logical size of the inode in bytes
