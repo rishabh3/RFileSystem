@@ -23,6 +23,10 @@ void convert_union_to_string(void *block_data, char* data, unsigned long int siz
 }
 
 void manage_inode_counters(){
+	/* Could be implemented better.
+	 * Currently, only uses a forward scan. If an inode gets freed up,
+	 * we cant use this recently freed inode.
+	 */
 	if(num_inode == INODES_PER_BLOCK-1){
 		num_inode_block++;
 		num_inode = 0;
@@ -34,6 +38,12 @@ void manage_inode_counters(){
 // Utility function to covert string to union.
 void convert_string_to_union(char* data, void *block_data, unsigned long int size){
 	memcpy(block_data, data,  size);
+}
+
+// Inode seek from the disk
+void seek_inode_block_inode_num(int inode_num, int* disk_block, int* inode_index){
+	*disk_block = (int)(inode_num / INODES_PER_BLOCK) + 1;
+	*inode_index =  inode_num % INODES_PER_BLOCK - 1;
 }
 
 
@@ -203,47 +213,21 @@ int rfs_create(int size){
 
 /*deletes the data held by an inode and resets for use,updates free block bitmap */
 int rfs_delete(int inode_num){
-	int i_num = inode_num;
-	char data[BLK_SIZE];
-	int count = 0;
-	while(i_num  > INODES_PER_BLOCK){
-		i_num -= INODES_PER_BLOCK;
-		count++;
-	}
-	union rfs_block blk;
-	int inode_block_num = count+1;
-	int inode_index = i_num - 1;
-	get_data_frm_disk(inode_block_num, data);
-	convert_string_to_union(data, (&(blk.inode)), sizeof(union rfs_block));
-	if(is_set(blk.inode[inode_index].isvalid)){
-		blk.inode[inode_index].isvalid = 0;
-		// Need to be worked upon.
-		if(!write_data_to_disk(num_inode_block+1, (void *)&(blk.inode), sizeof(union rfs_block))){
-				return 0;
-		}
-	}
-	else{
-		perror("Cannot remove! No Such file or directory!");
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
 //returns the logical size of the inode in bytes
 int rfs_getsize(int inode_num){
-	int i_num = inode_num;
+	int inode_block_num, inode_index;
+	union rfs_block block;
 	char data[BLK_SIZE];
-	int count = 0;
-	while(i_num  > INODES_PER_BLOCK){
-		i_num -= INODES_PER_BLOCK;
-		count++;
-	}
-	union rfs_block blk;
-	int inode_block_num = count+1;
-	int inode_index = i_num - 1;
+	seek_inode_block_inode_num(inode_num, &inode_block_num, &inode_index);
 	get_data_frm_disk(inode_block_num, data);
-	convert_string_to_union(data, (&(blk.inode)), sizeof(union rfs_block));
-	return (is_set(blk.inode[inode_index].isvalid)) ? blk.inode[inode_index].size : 0;
+	convert_string_to_union(data, (void*)(&(block.inode)), sizeof(union rfs_block));
+	if(is_set(block.inode[inode_index].isvalid)){
+		return block.inode[inode_index].size;
+	}
+	return -1;
 }
 
 //read data of 'length' bytes from an offset from an inode
