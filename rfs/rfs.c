@@ -19,7 +19,7 @@ static int inode_num = 0; // Keep track of new inode num
 // Utility function to convert union to string.
 void convert_union_to_string(void *block_data, char* data, unsigned long int size){
 	memcpy(data, block_data, size);
-	data = strcat(data, "\0");
+	data = strcat(data, "\000");
 }
 
 void manage_inode_counters(){
@@ -59,9 +59,12 @@ void print_info(union rfs_block block, int* num_inodes){
 	if(*num_inodes >= INODES_PER_BLOCK){
 		*num_inodes -= INODES_PER_BLOCK;
 	}
+	int prev_i = -1;
 	for(int i = 0;i < INODES_PER_BLOCK;i++){
-		if(block.inode[i].isvalid){
+		if(is_set(block.inode[i].isvalid) && prev_i != i){
+			prev_i = i;
 			printf("Inode %d: \n", i);
+			printf(" 	%d inode number \n", block.inode[i].inode_num);
 			printf(" 	%d file size \n", block.inode[i].size);
 			switch(block.inode[i].type){
 				case F_TYPE: printf(" 	Regular File\n");
@@ -90,10 +93,11 @@ void rfs_debug(){
 	printf(" 	%d inodes \n", s_block.super.num_inodes);
 	int first_inode_block = 1;
 	memset(data, ' ', BLK_SIZE);
-	for(int i = first_inode_block;i <= s_block.super.num_inodeblocks;i++){
+	for(int i = first_inode_block;i <= num_inode_block+1;i++){
 		get_data_frm_disk(i, data);
 		convert_string_to_union(data, (void*)(&(temp.inode)), sizeof(struct rfs_inode));
 		//memcpy(&(temp.inode) ,blk_data, sizeof(struct rfs_inode)*INODES_PER_BLOCK);
+		printf("Block Number: %d \n", i);
 		print_info(temp, &s_block.super.num_inodes);
 	}
 }
@@ -184,14 +188,14 @@ int rfs_mount(){
 }
 
 //creates a new inode of zero length
-int rfs_create(){
+int rfs_create(int size){
 	union rfs_block block;
 	block.inode[num_inode].isvalid = 1;
 	block.inode[num_inode].inode_num = generate_new_inode_num();
-	block.inode[num_inode].size = 0;
+	block.inode[num_inode].size = size;
 	block.inode[num_inode].type = F_TYPE;
 	manage_inode_counters();
-	if(!write_data_to_disk(num_inode_block+1, (void *)&(block.inode), sizeof(struct rfs_inode))){
+	if(!write_data_to_disk(num_inode_block+1, (void *)&(block.inode), sizeof(union rfs_block))){
 		return 0;
 	}
 	return 1;
@@ -199,12 +203,47 @@ int rfs_create(){
 
 /*deletes the data held by an inode and resets for use,updates free block bitmap */
 int rfs_delete(int inode_num){
-	return 0;
+	int i_num = inode_num;
+	char data[BLK_SIZE];
+	int count = 0;
+	while(i_num  > INODES_PER_BLOCK){
+		i_num -= INODES_PER_BLOCK;
+		count++;
+	}
+	union rfs_block blk;
+	int inode_block_num = count+1;
+	int inode_index = i_num - 1;
+	get_data_frm_disk(inode_block_num, data);
+	convert_string_to_union(data, (&(blk.inode)), sizeof(union rfs_block));
+	if(is_set(blk.inode[inode_index].isvalid)){
+		blk.inode[inode_index].isvalid = 0;
+		// Need to be worked upon.
+		if(!write_data_to_disk(num_inode_block+1, (void *)&(blk.inode), sizeof(union rfs_block))){
+				return 0;
+		}
+	}
+	else{
+		perror("Cannot remove! No Such file or directory!");
+		return 0;
+	}
+	return 1;
 }
 
 //returns the logical size of the inode in bytes
 int rfs_getsize(int inode_num){
-	return 0;
+	int i_num = inode_num;
+	char data[BLK_SIZE];
+	int count = 0;
+	while(i_num  > INODES_PER_BLOCK){
+		i_num -= INODES_PER_BLOCK;
+		count++;
+	}
+	union rfs_block blk;
+	int inode_block_num = count+1;
+	int inode_index = i_num - 1;
+	get_data_frm_disk(inode_block_num, data);
+	convert_string_to_union(data, (&(blk.inode)), sizeof(union rfs_block));
+	return (is_set(blk.inode[inode_index].isvalid)) ? blk.inode[inode_index].size : 0;
 }
 
 //read data of 'length' bytes from an offset from an inode
