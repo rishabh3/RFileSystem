@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
 			}
 		} else if(!strcmp(cmd,"ls")) {
 			if(args==1) {
-				list(dirpath);
+				list(argv[1]);
 			} else {
 				printf("use: ls\n");
 			}

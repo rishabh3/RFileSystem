@@ -60,6 +60,7 @@ int get_next_free_disk_block_num(){
 void disk_init(){
 	disk = (struct memdisk *)malloc(sizeof(struct memdisk)*NUM_BLOCKS);
 	for(int i = 0;i < NUM_BLOCKS;i++){
+		memset(disk[i].disk_data, '\0', sizeof(disk[i].disk_data));
 		disk->in_use = FREE;
 	}
 	new_disk = TRUE;
@@ -121,7 +122,7 @@ int disk_write(int block_num, char* data){
 	/* Disk Write Functionality */
 
 	sanity_check(block_num, data, WRITE);
-	// memset(disk[block_num].disk_data, ' ', sizeof(disk[block_num].disk_data));
+	memset(disk[block_num].disk_data, '\0', sizeof(disk[block_num].disk_data));
 	memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
 	disk[block_num].in_use = IN_USE;
 	nwrites++;

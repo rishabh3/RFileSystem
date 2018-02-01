@@ -115,7 +115,7 @@ void rfs_debug(){
 	memset(data, ' ', BLK_SIZE);
 	for(int i = first_inode_block;i <= num_inode_block+1;i++){
 		get_data_frm_disk(i, data);
-		convert_string_to_union(data, (void*)(&(temp.inode)), sizeof(struct rfs_inode));
+		convert_string_to_union(data, (void*)(&(temp.inode)), sizeof(union rfs_block));
 		//memcpy(&(temp.inode) ,blk_data, sizeof(struct rfs_inode)*INODES_PER_BLOCK);
 		// printf("Block Number: %d \n", i);
 		print_info(temp, &s_block.super.num_inodes);
@@ -247,27 +247,29 @@ int rfs_create(unsigned long int ctime, int type){
 		}
 	}
 	else{
+		struct rfs_inode temp;
+		temp.isvalid = 1;
+		temp.allocated = 0;
+		temp.type = type;
+		temp.inode_num = inode_num;
+		temp.tstamp.ctime = ctime;
+		temp.tstamp.atime = 0;
+		temp.tstamp.mtime = 0;
 		// Donot create a new one rather read the disk get the inodes create there and save that.
 		get_data_frm_disk(block_num, data);
 		convert_string_to_union(data, (void *)(&(block.inode)), sizeof(union rfs_block));
-		block.inode[inode_index].isvalid = 1;
-		block.inode[inode_index].inode_num = inode_num;
-		block.inode[inode_index].allocated = 0;
-		block.inode[inode_index].tstamp.ctime = ctime;
-		block.inode[inode_index].tstamp.atime = 0;
-		block.inode[inode_index].tstamp.mtime = 0;
-		block.inode[inode_index].type = type;
 		if(type == DIR_TYPE){
 			//block.inode[num_inode].direct[block.inode[num_inode].allocated] =
 			//get_next_free_disk_block_num();
 			//fprintf(stderr, "DEBUG:%d\n", block.inode[num_inode].direct[block.inode[num_inode].allocated]);
 			//block.inode[num_inode].allocated++; 
-			block.inode[inode_index].size = BLK_SIZE;
+			temp.size = BLK_SIZE;
 		}
 		else{
-			block.inode[inode_index].size = 0;
+			temp.size = 0;
 		}
 		manage_inode_counters();
+		memcpy(block.inode + inode_index, &temp, sizeof(struct rfs_inode));
 		// char data[BLK_SIZE];
 		if(!write_data_to_disk(block_num, (void *)&(block.inode), sizeof(union rfs_block))){
 			return 0;
@@ -281,7 +283,10 @@ int rfs_create(unsigned long int ctime, int type){
 int rfs_delete(int inode_num){
 	return 0;
 }
-
+void rfs_inode_debug(int inode_num){
+	int block_num , inode_index;
+	seek_inode_block_inode_num(inode_num, &block_num, &inode_index);
+}
 //returns the logical size of the inode in bytes
 int rfs_getsize(int inode_num){
 	int inode_block_num, inode_index;
@@ -405,17 +410,50 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 			return 0;
 		}
 		int bytes_written;
-		int next_block_num = get_next_free_disk_block_num();
-		current_inode->direct[loop_var] = next_block_num;
+		int next_block_num = current_inode->direct[current_inode->allocated];
+		// Check if there is any direct block associated with inode.
+		if(current_inode->direct[0] < NUM_INODE_BLOCKS+1){
+			next_block_num = get_next_free_disk_block_num();
+			current_inode->direct[loop_var] = next_block_num;
+		}
 		if(length >= fetch_size){
 			bytes_written = fetch_size;
 		}
 		else{
 			bytes_written = length % fetch_size;
 		}
-		//union rfs_block d_block;
+		union rfs_block d_block;
+		get_data_frm_disk(current_inode->direct[loop_var], d_block.buffer);
+		if(strlen(d_block.buffer) > DATA_SIZE){
+			next_block_num = get_next_free_disk_block_num();
+			loop_var = (current_inode->allocated += 1);
+			current_inode->direct[loop_var] = next_block_num;
+		}
+		else{
+			// if(strlen(d_block.buffer) != 0){
+			// 	strcat(d_block.buffer, "-\0");
+			// }
+			if(d_block.buffer[0] == '\0'){
+				memcpy(d_block.buffer, data + c_ptr, bytes_written);
+			}
+			else{
+				int i = 0;
+				int count = 0;
+				do{
+					char chr = d_block.buffer[i];
+					if(chr == '.' || (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z')){
+						count++;
+					} 
+					else{
+						break;
+					}
+					i += bytes_written;
+				}while(i < DATA_SIZE);
+				memcpy(d_block.buffer+bytes_written*count, data + c_ptr, bytes_written);
+			}
+		}
 		//memcpy(&(d_block.buffer),data + c_ptr,bytes_written);
-		write_data_to_disk(next_block_num,(void *)data,bytes_written);
+		write_data_to_disk(next_block_num,(void *)(&(d_block.buffer)),sizeof(union rfs_block));
 		c_ptr += bytes_written;
 		length -= bytes_written;
 		loop_var++;

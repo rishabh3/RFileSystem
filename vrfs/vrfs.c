@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 
+
 void convert_struct_to_string(char * data, struct dentry * direntry, unsigned long int size){
     memcpy(data, direntry, size);
     strcat(data, "\0");
@@ -36,19 +37,22 @@ int make_rfs(char *username){
         struct dentry rootdir;
         //fprintf(stderr, "DEBUG:%d\n", inode_num);
         rootdir.inode_num = inode_num;
-        memcpy(rootdir.name, username, MAX_SIZE);
-        rootdir.name[MAX_SIZE-1] = '\0';
+        memcpy(rootdir.name, ".", 1);
+        rootdir.name[1] = '\0';
         char data[BLK_SIZE];
         convert_struct_to_string(data, &rootdir, sizeof(struct dentry));
         // Write the data to disk
-        int size = strlen(data);
+        int size = sizeof(struct dentry);
+        // struct dentry file;
+        // convert_string_to_struct(&file, data, sizeof(struct dentry));
+        // fprintf(stderr, "DEBUG: %d %s\n", file.inode_num, file.name);
         if(!rfs_write(inode_num, data, size, 0)){
             return 0;
         }
         // Change the directory to that directory.
-        memcpy(rootdirname, username, MAX_SIZE);
-        strcat(rootdirname, "/");
-        memcpy(current_working_directory, rootdirname, MAX_SIZE);
+        memcpy(rootdirname, username, strlen(username));
+        // strcat(rootdirname, "/");
+        memcpy(current_working_directory, rootdirname, strlen(username));
         rootinode = inode_num;
         return 1;
     }
@@ -72,8 +76,8 @@ int create(char *filename){
     //Read the data of the current directory.
     struct dentry newfile, file;
     newfile.inode_num = inode_num;
-    memcpy(newfile.name, filename, MAX_SIZE);
-    newfile.name[MAX_SIZE-1] = '\0';
+    memcpy(newfile.name, filename,strlen(filename));
+    newfile.name[strlen(filename)] = '\0';
     // printf("%s \n %d \n", newfile.name, newfile.inode_num);
     convert_struct_to_string(data, &newfile, sizeof(struct dentry));
     // printf("%s\n", data);
@@ -90,24 +94,32 @@ char * present_working_directory(){
     return current_working_directory;
 }
 
-struct dentry * read_dir(char *dirname, int* size){
-    struct dentry* dirdata = (struct dentry *) malloc(BLK_SIZE/sizeof(struct dentry));
+int read_dir(char *dirname, int* size, struct dentry * result){
+    struct dentry dirdata[MAX_DENTRY];
+    struct dentry temp;
     int loop_var = 0;
     int current_pos;
+    const char splitter[2] = "-";
     char data[BLK_SIZE];
-    char *readpointer = data;
+    char *readpointer;
+    char *token;
     if(!strcmp(dirname, rootdirname)){
         if(!rfs_read(rootinode, data, BLK_SIZE, 0)){
-            return NULL;
+            return 0;
         }
-        while(readpointer != NULL){
+        readpointer = data;
+        while(*readpointer != '\0'){
             current_pos = loop_var*sizeof(struct dentry);
-            convert_string_to_struct(dirdata+loop_var, readpointer + current_pos, sizeof(struct dentry));
+            convert_string_to_struct(dirdata+loop_var, data + current_pos, sizeof(struct dentry));
+            readpointer += current_pos;
             loop_var++;
         }
     }
     *size = loop_var;
-    return dirdata;
+    for(int i = 0;i < *size;i++){
+        memcpy(result+i, dirdata+i, sizeof(struct dentry));
+    }
+    return 1;
     // return NULL;
 }
 
