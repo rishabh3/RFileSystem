@@ -303,7 +303,9 @@ int rfs_getsize(int inode_num){
 
 //read data of 'length' bytes from an offset from an inode
 int rfs_read(int inode_num,char *data,int length,int offset){
-
+	if(length > (DATA_SIZE)*(POINTERS_PER_INODE)){
+		return 0;
+	}
 	/*NOTE:
 	* Assumes that the direct pointers are written one after the other
 	* i.e if direct[0] is full the next data is in direct[1] and so on.
@@ -368,6 +370,9 @@ int rfs_read(int inode_num,char *data,int length,int offset){
 
 //write data of 'length' bytes from an offset
 int rfs_write(int inode_num,char *data,int length,int offset){
+	if(length > (DATA_SIZE)*(POINTERS_PER_INODE)){
+		return 0;
+	}
 	/*NOTE:
 	* Assumes that the direct pointers are written one after the other
 	* i.e if direct[0] is full the next data is in direct[1] and so on.
