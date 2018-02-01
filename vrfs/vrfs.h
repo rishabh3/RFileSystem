@@ -23,7 +23,7 @@ struct dentry{
 };
 
 /* File Operations */
-int open(char *filename);
+int create(char *filename);
 bool read(char *filename, char *data, rsize_t size);
 bool write(char *filename, char *data, rsize_t size);
 int rm_file(char* filename);
@@ -32,7 +32,7 @@ int rm_file(char* filename);
 char* present_working_directory();
 int make_directory(char *dirname);
 int remove_directory(char* dirname);
-struct dentry * read_dir(char *dirname);
+struct dentry * read_dir(char *dirname, int* size);
 int change_directory(char *dirname);
 
 int make_rfs(char *username);

@@ -6,5 +6,6 @@
 
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
-
+int list(char* path);
+int touch(char* file);
 #endif

@@ -78,6 +78,18 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: debug\n");
 			}
+		} else if(!strcmp(cmd,"ls")) {
+			if(args==1) {
+				list(dirpath);
+			} else {
+				printf("use: ls\n");
+			}
+		} else if(!strcmp(cmd,"touch")) {
+			if(args==2) {
+				touch(arg1);
+			} else {
+				printf("use: touch <file>\n");
+			}
 		} else if(!strcmp(cmd,"mkfs")) {
 			if(args==1) {
 				if(!make_rfs(argv[1])){

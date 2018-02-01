@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "rfs.h"
+#include <time.h>
 #include "../memdisk/memdisk.h"
 
 #define is_set(flag)	(flag == 1 ? 1 : 0)
@@ -19,7 +20,7 @@ static int inode_num = 0; // Keep track of new inode num
 // Utility function to convert union to string.
 void convert_union_to_string(void *block_data, char* data, unsigned long int size){
 	memcpy(data, block_data, size);
-	data = strcat(data, "\000");
+	// strcat(data, "\0");
 }
 
 void manage_inode_counters(){
@@ -47,8 +48,17 @@ void seek_inode_block_inode_num(int inode_num, int* disk_block, int* inode_index
 }
 
 
+
 void get_data_frm_disk(int block_num, char * block_data){
 	disk_read(block_num, block_data);
+}
+
+struct rfs_inode read_data_frm_disk(int block_num){
+	char data[BLK_SIZE];
+	get_data_frm_disk(block_num, data);
+	union rfs_block block;
+	convert_string_to_union(data,(void *)(&(block.inode)), sizeof(union rfs_block));
+	return block.inode[0];
 }
 
 int generate_new_inode_num(){
@@ -69,10 +79,10 @@ void print_info(union rfs_block block, int* num_inodes){
 	if(*num_inodes >= INODES_PER_BLOCK){
 		*num_inodes -= INODES_PER_BLOCK;
 	}
-	int prev_i = -1;
+	// int prev_i = -1;
 	for(int i = 0;i < INODES_PER_BLOCK;i++){
-		if(is_set(block.inode[i].isvalid) && prev_i != i){
-			prev_i = i;
+		if(is_set(block.inode[i].isvalid)){
+			// prev_i = i;
 			printf("Inode %d: \n", i);
 			printf(" 	%d inode number \n", block.inode[i].inode_num);
 			printf(" 	%d file size \n", block.inode[i].size);
@@ -94,7 +104,7 @@ void rfs_debug(){
 	union rfs_block s_block, temp;
 	char data[BLK_SIZE];
 	get_data_frm_disk(SUPER_BLOCK, data);
-	convert_string_to_union(data, (void*)(&s_block.super), sizeof(struct rfs_superblock));
+	convert_string_to_union(data, (void*)(&(s_block.super)), sizeof(union rfs_block));
 	//memcpy(&(s_block.super), blk_data, sizeof(struct rfs_superblock));
 	printf("SuperBlock: \n");
 	printf(" 	%d magic number \n", s_block.super.magic_num);
@@ -107,7 +117,7 @@ void rfs_debug(){
 		get_data_frm_disk(i, data);
 		convert_string_to_union(data, (void*)(&(temp.inode)), sizeof(struct rfs_inode));
 		//memcpy(&(temp.inode) ,blk_data, sizeof(struct rfs_inode)*INODES_PER_BLOCK);
-		printf("Block Number: %d \n", i);
+		// printf("Block Number: %d \n", i);
 		print_info(temp, &s_block.super.num_inodes);
 	}
 }
@@ -136,7 +146,7 @@ int rfs_format(){
 		//printf("DEBUG: %d\n", block.super.num_inodeblocks);
 		block.super.num_inodes = (INODES_PER_BLOCK)*num_inodeblocks;
 		//printf("DEBUG: %d\t%d\n", block.super.num_inodes, num_inodeblocks*(INODES_PER_BLOCK));
-		if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
+		if(!write_data_to_disk(SUPER_BLOCK, (void *)(&(block.super)), sizeof(struct rfs_superblock))){
 			return 0;
 		}
 		for(int i = 1;i <= num_inodeblocks;i++){
@@ -164,7 +174,7 @@ int rfs_format(){
 		// Get all inodes and then reset the valid bits.
 		for(int i = 1;i <= num_inodeblocks;i++){
 			get_data_frm_disk(i, data);
-			convert_string_to_union(data, (&(temp.inode)), sizeof(struct rfs_inode));
+			convert_string_to_union(data, (&(temp)), sizeof(struct rfs_inode));
 			//memcpy(&(block.inode) ,blk_data, sizeof(struct rfs_inode));
 			unset_invalid_bit(&temp);
 			if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
@@ -191,39 +201,80 @@ int rfs_mount(){
 	union rfs_block block;
 	char data[BLK_SIZE];
 	get_data_frm_disk(SUPER_BLOCK, data);
-	convert_string_to_union(data, (void*)(&block.super), sizeof(struct rfs_superblock));
+	convert_string_to_union(data, (void*)(&(block.super)), sizeof(struct rfs_superblock));
 	//memcpy(&(block.super), blk_data, sizeof(struct rfs_superblock));
 	/*bitmap = (char *)malloc(sizeof(char)*NUM_BLOCKS);
 	for(int i = 0;i < block.super.num_blocks;i++){
 		bitmap[i] = '1';
 	}*/
+	if(block.super.magic_num != SUPER_MAGIC){
+		return 0;
+	}
 	return 1;
 }
 
 //creates a new inode of zero length
-int rfs_create(unsigned long int ctime, unsigned long int atime, unsigned long int mtime, int type){
+int rfs_create(unsigned long int ctime, int type){
 	union rfs_block block;
-	block.inode[num_inode].isvalid = 1;
-	block.inode[num_inode].allocated = 0;
-	block.inode[num_inode].inode_num = generate_new_inode_num();
-	block.inode[num_inode].tstamp.ctime = ctime;
-	block.inode[num_inode].tstamp.atime = atime;
-	block.inode[num_inode].tstamp.mtime = mtime;
-	block.inode[num_inode].type = type;
-	if(type == DIR_TYPE){
-		block.inode[num_inode].direct[block.inode[num_inode].allocated] =
-	 	get_next_free_disk_block_num();
-		block.inode[num_inode].allocated++; 
-		block.inode[num_inode].size = BLK_SIZE;
+	int inode_num = generate_new_inode_num();
+	int block_num, inode_index;
+	char data[BLK_SIZE];
+	seek_inode_block_inode_num(inode_num, &block_num, &inode_index);
+	if(inode_index == 0){
+		// Create a new inode and then save it.
+		block.inode[num_inode].isvalid = 1;
+		block.inode[num_inode].allocated = 0;
+		block.inode[num_inode].inode_num = inode_num;
+		//fprintf(stderr, "DEBUG:%d\n", block.inode[num_inode].inode_num);
+		block.inode[num_inode].tstamp.ctime = ctime;
+		block.inode[num_inode].tstamp.atime = 0;
+		block.inode[num_inode].tstamp.mtime = 0;
+		block.inode[num_inode].type = type;
+		if(type == DIR_TYPE){
+			//block.inode[num_inode].direct[block.inode[num_inode].allocated] =
+			//get_next_free_disk_block_num();
+			//fprintf(stderr, "DEBUG:%d\n", block.inode[num_inode].direct[block.inode[num_inode].allocated]);
+			//block.inode[num_inode].allocated++; 
+			block.inode[num_inode].size = BLK_SIZE;
+		}
+		else{
+			block.inode[num_inode].size = 0;
+		}
+		manage_inode_counters();
+		// char data[BLK_SIZE];
+		if(!write_data_to_disk(block_num, (void *)&(block.inode), sizeof(union rfs_block))){
+			return 0;
+		}
 	}
 	else{
-		block.inode[num_inode].size = 0;
+		// Donot create a new one rather read the disk get the inodes create there and save that.
+		get_data_frm_disk(block_num, data);
+		convert_string_to_union(data, (void *)(&(block.inode)), sizeof(union rfs_block));
+		block.inode[inode_index].isvalid = 1;
+		block.inode[inode_index].inode_num = inode_num;
+		block.inode[inode_index].allocated = 0;
+		block.inode[inode_index].tstamp.ctime = ctime;
+		block.inode[inode_index].tstamp.atime = 0;
+		block.inode[inode_index].tstamp.mtime = 0;
+		block.inode[inode_index].type = type;
+		if(type == DIR_TYPE){
+			//block.inode[num_inode].direct[block.inode[num_inode].allocated] =
+			//get_next_free_disk_block_num();
+			//fprintf(stderr, "DEBUG:%d\n", block.inode[num_inode].direct[block.inode[num_inode].allocated]);
+			//block.inode[num_inode].allocated++; 
+			block.inode[inode_index].size = BLK_SIZE;
+		}
+		else{
+			block.inode[inode_index].size = 0;
+		}
+		manage_inode_counters();
+		// char data[BLK_SIZE];
+		if(!write_data_to_disk(block_num, (void *)&(block.inode), sizeof(union rfs_block))){
+			return 0;
+		}
 	}
-	manage_inode_counters();
-	if(!write_data_to_disk(num_inode_block+1, (void *)&(block.inode), sizeof(union rfs_block))){
-		return 0;
-	}
-	return block.inode[num_inode].inode_num;
+	// fprintf(stderr, "DEBUG:%d\n", block.inode[num_inode-1].inode_num);
+	return inode_num;
 }
 
 /*deletes the data held by an inode and resets for use,updates free block bitmap */
@@ -326,7 +377,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 	//set the fields of the block union
 	char buffer[BLK_SIZE]; 
 	get_data_frm_disk(block_index,buffer); //get data from the block
-	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block)); //convert it back inode format.
+	convert_string_to_union(buffer,(void *)(&(block.inode)),sizeof(union rfs_block)); //convert it back inode format.
 	/* 
 	* POSSIBLE BUGS: memcpy may not have copied all the fields of the inode 
 	* struct correctly
@@ -346,7 +397,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 	int c_ptr = 0; //offset to write into in destination buffer
 	const int fetch_size = (BLK_SIZE)- sizeof(int); //the max amount of bytes each data block can hold
 	int blocks_to_write_into = length / fetch_size; //gets the number of blocks to write into
-	int loop_var = current_inode->allocated < POINTERS_PER_INODE ? current_inode->allocated : -1; //loop variable to iterate over the required blocks to write into
+	int loop_var = (current_inode->allocated < POINTERS_PER_INODE) ? current_inode->allocated : -1; //loop variable to iterate over the required blocks to write into
 	
 	do{
 		if(loop_var == -1){
@@ -362,9 +413,9 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 		else{
 			bytes_written = length % fetch_size;
 		}
-		union rfs_block d_block;
-		memcpy(&(d_block.buffer),data + c_ptr,bytes_written);
-		write_data_to_disk(next_block_num,(void *)&d_block,sizeof(union rfs_block));
+		//union rfs_block d_block;
+		//memcpy(&(d_block.buffer),data + c_ptr,bytes_written);
+		write_data_to_disk(next_block_num,(void *)data,bytes_written);
 		c_ptr += bytes_written;
 		length -= bytes_written;
 		loop_var++;

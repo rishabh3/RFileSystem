@@ -16,7 +16,7 @@
 static int num_blocks = 0; // This will increase when the block is completely full
 static int nreads = 0; // This will keep track of number of reads.
 static int nwrites = 0; // This will keep track of number of writes to disk.
-static int num_data_block = NUM_INODE_BLOCKS; // start of data block
+static int num_data_block = NUM_INODE_BLOCKS+1; // start of data block
 
 void sanity_check(int block_index, char * data, int type_of_operation){
 
@@ -121,6 +121,7 @@ int disk_write(int block_num, char* data){
 	/* Disk Write Functionality */
 
 	sanity_check(block_num, data, WRITE);
+	// memset(disk[block_num].disk_data, ' ', sizeof(disk[block_num].disk_data));
 	memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
 	disk[block_num].in_use = IN_USE;
 	nwrites++;

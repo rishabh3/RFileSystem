@@ -17,6 +17,7 @@
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
 #define FREE 0x00
+#define DATA_SIZE  (DISK_BLK_SIZE - sizeof(int))
 
 
 struct memdisk;
