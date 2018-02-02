@@ -14,7 +14,7 @@
 
 #define NUM_DIRECT 1 << 2
 
-struct timestamp{
+struct timest{
     unsigned long int ctime; // When the particular inode was changed. Stored in Epoch
 	unsigned long int mtime; // when the file contents were modified Stored in Epoch
 	unsigned long int atime; // when the file was accessed. Stored in Epoch
@@ -23,7 +23,7 @@ struct timestamp{
 struct vrfs_stat{
     int inode_num;
     int size;
-    struct timestamp tstamp;
+    struct timest tstamp;
     int type;
     int direct[NUM_DIRECT];
 };
