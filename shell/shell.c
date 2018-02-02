@@ -51,6 +51,9 @@ int main(int argc, char *argv[]){
 				printf("use: format\n");
 			}
 		} else if(!strcmp(cmd,"mount")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("mount failed! No disk found!\n");
+			}
 			if(args==1) {
 				if(make_rfs(argv[1])) {
 					printf("disk mounted.\n");
@@ -61,6 +64,9 @@ int main(int argc, char *argv[]){
 				printf("use: mount\n");
 			}
 		} else if(!strcmp(cmd,"unmount")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("unmount failed! No disk found!\n");
+			}
 			if(args==1) {
 				if(rfs_unmount()) {
 					printf("disk unmounted.\n");
@@ -73,24 +79,36 @@ int main(int argc, char *argv[]){
 				printf("use: unmount\n");
 			}
 		} else if(!strcmp(cmd,"debug")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("debug failed! No disk found!\n");
+			}
 			if(args==1) {
 				rfs_debug();
 			} else {
 				printf("use: debug\n");
 			}
 		} else if(!strcmp(cmd,"ls")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("ls failed! No disk found!\n");
+			}
 			if(args==1) {
 				list(argv[1]);
 			} else {
 				printf("use: ls\n");
 			}
 		} else if(!strcmp(cmd,"touch")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("touch failed! No disk found!\n");
+			}
 			if(args==2) {
 				touch(arg1);
 			} else {
 				printf("use: touch <file>\n");
 			}
 		} else if(!strcmp(cmd,"mkfs")) {
+			if(disk == NULL){
+				printf("mkfs failed! No disk found!\n");
+			}
 			if(args==1) {
 				if(!make_rfs(argv[1])){
                     printf("Error in making the RFileSystem!\n");
@@ -104,6 +122,9 @@ int main(int argc, char *argv[]){
 				printf("use: mkfs\n");
 			}
 		} else if(!strcmp(cmd, "disksize")){
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("disksize failed! No disk found!\n");
+			}
             if(args == 1){
                 result = disk_size();
                 if(result >= 0){
@@ -118,6 +139,9 @@ int main(int argc, char *argv[]){
                 printf("use: disksize\n");
             }
         } else if(!strcmp(cmd,"getsize")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("getsize failed! No disk found!\n");
+			}
 			if(args==2) {
 				inumber = atoi(arg1);
 				result = rfs_getsize(inumber);

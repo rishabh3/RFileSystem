@@ -19,7 +19,7 @@ int list(char* path){
     }
 
     for(int i = 0;i < size;i++){
-        printf("%s %d\t", result[i].name, result[i].inode_num);
+        printf("%s\t", result[i].name);
     }
     printf("\n");
     free(result);
