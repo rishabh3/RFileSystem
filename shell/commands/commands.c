@@ -11,13 +11,15 @@
 
 int list(char* path){
     int size;
-    struct dentry * result = read_dir(path, &size);
+    struct dentry *result = (struct dentry *)malloc((MAX_DENTRY)*(sizeof(struct dentry)));
+    read_dir(path, &size, result);
     if(size == 0 || result == NULL){
         printf("\n");
         return 0;
     }
+
     for(int i = 0;i < size;i++){
-        printf("%s\t", result[i].name);
+        printf("%s %d\t", result[i].name, result[i].inode_num);
     }
     printf("\n");
     free(result);

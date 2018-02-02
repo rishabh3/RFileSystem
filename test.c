@@ -38,7 +38,7 @@ int main(){
 	// rfs_write(1,"Hello My Name is Rishabh.\0", 27, 0);
 	// rfs_read(1, data, BLK_SIZE,0);
 	// printf("%s\n", data);
-	touch("test");
+	touch("hello");
 	// printf("File created\n");
 	list("rdx");
 	// for(int i = 0;i < 48;i++){

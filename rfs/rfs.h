@@ -59,7 +59,7 @@ union rfs_block{
 };
 
 void rfs_debug(); /* scan a mounted fs and prints info on superblock and each inode */
-
+void rfs_inode_debug(int inode_num);
 int rfs_format(); //writes a new file system onto the disk,re writes super block
 int rfs_mount(); //checks if disk has filesystem, if present read the super block and build free block bitmap
 
