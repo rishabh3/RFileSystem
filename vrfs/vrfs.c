@@ -99,13 +99,10 @@ char * present_working_directory(){
 
 int read_dir(char *dirname, int* size, struct dentry * result){
     struct dentry dirdata[MAX_DENTRY];
-    struct dentry temp;
     int loop_var = 0;
     int current_pos;
-    const char splitter[2] = "-";
     char data[BLK_SIZE];
     char *readpointer;
-    char *token;
     if(!strcmp(dirname, rootdirname)){
         if(!rfs_read(rootinode, data, BLK_SIZE, 0)){
             return 0;
@@ -134,7 +131,7 @@ struct vrfs_stat *stat(char *filename){
         return NULL;
     }
 
-    struct vrfs_stat stat;
+    struct vrfs_stat *stat = (struct vrfs_stat*)malloc(sizeof(struct vrfs_stat));
 
     //check if inode if valid
     struct dentry result[MAX_DENTRY];
@@ -147,10 +144,11 @@ struct vrfs_stat *stat(char *filename){
     else{
         for(int i=0;i<size;i++){
             if(!strcmp(result[i].name,filename)){
+               printf("%s %s\n", result[i].name, filename); 
                char buffer[sizeof(struct vrfs_stat)]; 
                rfs_getattr(result[i].inode_num,buffer);
-               convert_string_to_stat(&stat,buffer,sizeof(buffer));
-               return &stat;
+               convert_string_to_stat(stat,buffer,sizeof(buffer));
+               return stat;
             }
         }
         fprintf(stderr,"No such file or directory exists\n");

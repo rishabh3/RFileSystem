@@ -34,16 +34,16 @@ int main(){
     disk_init();
     rfs_format();
     make_rfs("ravi");
-    create("sample");
+    int inode = create("sample");
     printf("sadasd\n");
-    /*
-    char data[100];
-    if(!rfs_getattr(inode,data)){
-        fprintf(stderr,"Failed to get file stats\n");
-        rfs_unmount();
-        exit(1);
-    }
-    */
+   
+    // char data[100];
+    // if(!rfs_getattr(inode,data)){
+    //     fprintf(stderr,"Failed to get file stats\n");
+    //     rfs_unmount();
+    //     exit(1);
+    // }
+    
     struct vrfs_stat *temp = stat("sample");
     printf("%d %d %d %d\n",temp->inode_num,temp->size,temp->type,temp->direct[0]);
     rfs_unmount();

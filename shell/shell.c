@@ -121,6 +121,17 @@ int main(int argc, char *argv[]){
             } else {
 				printf("use: mkfs\n");
 			}
+		} else if(!strcmp(cmd,"stat")) {
+			if(disk == NULL){
+				printf("stat failed! No disk found!\n");
+			}
+			if(args==2) {
+				if(!stat_file(arg1)){
+                    printf("Error in retrieving the file status!\n");
+                }
+            } else {
+				printf("use: stat <filename>\n");
+			}
 		} else if(!strcmp(cmd, "disksize")){
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("disksize failed! No disk found!\n");
@@ -154,9 +165,9 @@ int main(int argc, char *argv[]){
 				printf("use: getsize <inumber>\n");
 			}
 			
-		} else if(!strcmp(cmd,"clear")) {
+		} else if(!strcmp(cmd,"cls")) {
 			if(args == 1){
-                system("clear");
+                system("cls");
             } 
     	} else if(!strcmp(cmd,"help")) {
 			printf("Commands are:\n");
