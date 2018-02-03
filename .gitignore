@@ -6,3 +6,6 @@ a.out
 rfstest
 rfstest.exe
 .DS_Store
+*.exe
+rshell
+test

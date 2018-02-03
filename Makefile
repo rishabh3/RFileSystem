@@ -1,25 +1,26 @@
-PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+CC = gcc
+CFLAGS = -g -Wall
+OBJDIR = bin
 
-OBJS = RFileSystem.o
+all: rshell
 
-ifeq ($(BUILD_MODE),debug)
-	CFLAGS += -g
-else ifeq ($(BUILD_MODE),run)
-	CFLAGS += -O2
-else
-	$(error Build mode $(BUILD_MODE) not supported by this Makefile)
-endif
+$(OBJDIR)/memdisk.o:
+	$(MAKE) -C memdisk/
 
-all:	RFileSystem
+$(OBJDIR)/rfs.o:
+	$(MAKE) -C rfs/
 
-RFileSystem:	$(OBJS)
-	$(CXX) -o $@ $^
+$(OBJDIR)/vrfs.o:
+	$(MAKE) -C vrfs/
 
-%.o:	$(PROJECT_ROOT)%.cpp
-	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -o $@ $<
+$(OBJDIR)/commands.o:
+	$(MAKE) -C shell/commands/
 
-%.o:	$(PROJECT_ROOT)%.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+$(OBJDIR)/shell.o:
+	$(MAKE) -C shell/
+
+rshell: $(OBJDIR)/memdisk.o $(OBJDIR)/rfs.o $(OBJDIR)/vrfs.o $(OBJDIR)/shell.o $(OBJDIR)/commands.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -fr RFileSystem $(OBJS)
+	$(RM) rshell $(OBJDIR)/*.o *~ memdisk/*.gch rfs/*.gch vrfs/*.gch shell/*.gch shell/commands/*.gch

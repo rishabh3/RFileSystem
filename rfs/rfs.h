@@ -65,6 +65,7 @@ int rfs_mount(); //checks if disk has filesystem, if present read the super bloc
 int rfs_create(unsigned long int ctime,int type); //creates a new inode of zero length
 int rfs_delete(int inode_num); /*deletes the data held by an inode and resets for use,updates free block bitmap */
 int rfs_getsize(int inode_num); //returns the logical size of the inode in bytes
+int rfs_getattr(int inode_num,char *data);
 
 int rfs_read(int inode_num,char *data,int length,int offset); //read data of 'length' bytes from an offset from an inode
 int rfs_write(int inode_num,char *data,int length,int offset); //write data of 'length' bytes from an offset

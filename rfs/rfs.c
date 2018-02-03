@@ -356,6 +356,51 @@ int rfs_getsize(int inode_num){
 	}
 	return -1;
 }
+//function to return the file attributes
+int rfs_getattr(int inode_num,char *data){
+	/*
+	*writes the required inode information to the buffer
+	*Function will return the inode number, size of the file in bytes
+	*timestamp data type of file and blocks in use.
+	*/
+	if(data == NULL){
+		fprintf(stderr,"Invalid buffer to write to.\n");
+		return 0;
+	}	
+	int block_number; //inode block number
+	int inode_index; //offset of inode in block
+	seek_inode_block_inode_num(inode_num,&block_number,&inode_index); //sets the value of the previous fields
+	
+	char buffer[BLK_SIZE];
+	union rfs_block block;
+	get_data_frm_disk(block_number,buffer);
+	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block)); //gets the required inode block
+	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode
+
+	//check if the inode is valid
+	if(!is_set(current_inode->isvalid)){
+		fprintf(stderr,"Invalid inode accessed. Inode: %d is not in use\n",inode_num);
+		return 0;
+	}
+
+	//extract the fields of the inode
+	int c_ptr = 0;
+	memcpy(data + c_ptr,&inode_num,sizeof(int)); //writing the inode number into the buffer
+	c_ptr += sizeof(int);
+
+	memcpy(data + c_ptr,&(current_inode->size),sizeof(int)); // writing the size of the file in bytes to the buffer
+	c_ptr += sizeof(int);
+
+	memcpy(data + c_ptr,&(current_inode->tstamp),sizeof(struct timestamp)); //writes the timestamp to the buffer
+	c_ptr += sizeof(struct timestamp);
+
+	memcpy(data + c_ptr,&(current_inode->type),sizeof(int)); //writes the type of the file to the buffer
+	c_ptr += sizeof(int);
+
+	memcpy(data + c_ptr,current_inode->direct,sizeof(POINTERS_PER_INODE * sizeof(int)));	
+	c_ptr += sizeof(POINTERS_PER_INODE * sizeof(int));
+	return 1;
+}
 
 //read data of 'length' bytes from an offset from an inode
 int rfs_read(int inode_num,char *data,int length,int offset){
@@ -365,11 +410,12 @@ int rfs_read(int inode_num,char *data,int length,int offset){
 	* i.e if direct[0] is full the next data is in direct[1] and so on.
 	*/
 
-	if(disk_mounted == FALSE || disk == NULL){
+	if(data == NULL){
+		fprintf(stderr,"Invalid buffer provided\n");
 		return 0;
 	}
-
 	if(length > (DATA_SIZE)*(POINTERS_PER_INODE)){
+		fprintf(stderr,"Too Big data\n");
 		return 0;
 	}
 
@@ -440,8 +486,13 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 	if(disk_mounted == FALSE || disk == NULL){
 		return 0;
 	}
-
 	if(length > (DATA_SIZE)*(POINTERS_PER_INODE)){
+		fprintf(stderr,"Too Big data\n");
+		return 0;
+	}
+
+	if(data == NULL){
+		fprintf(stderr,"Invalid buffer provided\n");
 		return 0;
 	}
 
