@@ -47,19 +47,18 @@ struct rfs_inode{
     */ 
 };
 
-char *bitmap;
+char *bitmap; // Bitmap to track the number of free disk blocks.
 
 union rfs_block{
-    struct rfs_superblock super;
-    struct rfs_inode inode[INODES_PER_BLOCK];
+    struct rfs_superblock super; // Superblock to store the superblock information.
+    struct rfs_inode inode[INODES_PER_BLOCK]; // Array of inodes for every disk block.
     /* deprecated 
     * int pointers[NUM_INDIRECT_POINTERS];
     */
-    char buffer[(BLK_SIZE) - sizeof(int)];
+    char buffer[(BLK_SIZE) - sizeof(int)]; // Buffer to store any data to read from or write to disk.
 };
 
 void rfs_debug(); /* scan a mounted fs and prints info on superblock and each inode */
-void rfs_inode_debug(int inode_num);
 int rfs_format(); //writes a new file system onto the disk,re writes super block
 int rfs_mount(); //checks if disk has filesystem, if present read the super block and build free block bitmap
 
@@ -71,5 +70,5 @@ int rfs_getattr(int inode_num,char *data);
 int rfs_read(int inode_num,char *data,int length,int offset); //read data of 'length' bytes from an offset from an inode
 int rfs_write(int inode_num,char *data,int length,int offset); //write data of 'length' bytes from an offset
 
-int rfs_unmount();
+int rfs_unmount(); // Unmounts the filesystem and closes the connection to the disk.
 #endif /* RFS_RFS_H_ */

@@ -16,8 +16,8 @@
 #define IN_USE 0x01	// Flags for checking in_use or not
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
-#define FREE 0x00
-#define DATA_SIZE  (DISK_BLK_SIZE - sizeof(int))
+#define FREE 0x00 // Flags to check if disk is free
+#define DATA_SIZE  (DISK_BLK_SIZE - sizeof(int)) // Macro for size of data to write or read from disk.
 
 
 struct memdisk;
@@ -28,20 +28,19 @@ struct memdisk{
 };
 // This is the in memory disk for storage emulator.
 
-struct memdisk *disk;
-bool disk_mounted;
-bool new_disk;
+struct memdisk *disk; // The in memory emulated disk.
+bool disk_mounted; // Flags to check if disk is mounted.
+bool new_disk; // Flags to check if disk has veen formatted.
 
-void disk_init();
-int get_next_free_disk_block_num();
-void disk_mount();
-void disk_unmount();
-void delete_disk();
+void disk_init(); // Initialization of disk.
+int get_next_free_disk_block_num(); // Returns the next free disk block number.
+void disk_mount(); // Mount the disk 
+void disk_unmount(); // Unmount the disk
+void delete_disk(); // Delete the disk free up the disk space.
 int disk_size(); // Return the remaining size of the disk.
 void disk_read(int ,char *); // Read from the disk.
 int disk_write(int ,char *); // Write to the disk.
-void disk_unmount();
-int reset_stats();
+int reset_stats(); // Reset the status variables.
 
 
 #endif /* MEMDISK_MEMDISK_H_ */
