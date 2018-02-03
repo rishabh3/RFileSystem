@@ -24,6 +24,9 @@ void convert_string_to_struct(struct dentry * direntry, char * data ,  unsigned 
     //data[size] = '\0';
 }
 
+void convert_string_to_stat(struct vrfs_stat *stat,char *data,unsigned long int size){
+    memcpy(stat,data,size);
+}
 
 int make_rfs(char *username){
     unsigned long int seconds;
@@ -123,3 +126,34 @@ int read_dir(char *dirname, int* size, struct dentry * result){
     // return NULL;
 }
 
+struct vrfs_stat *stat(char *filename){
+
+    //check for a valid filename being passed
+    if(filename == NULL){
+        fprintf(stderr,"Please specify a valid file name\n");
+        return NULL;
+    }
+
+    struct vrfs_stat stat;
+
+    //check if inode if valid
+    struct dentry result[MAX_DENTRY];
+    int size;
+    read_dir(current_working_directory,&size,result); 
+    if(size == 0){
+        fprintf(stderr,"Failed to read directory\n");
+        return NULL;
+    }   
+    else{
+        for(int i=0;i<size;i++){
+            if(!strcmp(result[i].name,filename)){
+               char buffer[sizeof(struct vrfs_stat)]; 
+               rfs_getattr(result[i].inode_num,buffer);
+               convert_string_to_stat(&stat,buffer,sizeof(buffer));
+               return &stat;
+            }
+        }
+        fprintf(stderr,"No such file or directory exists\n");
+        return NULL;
+    }
+}

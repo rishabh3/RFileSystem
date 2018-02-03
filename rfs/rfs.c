@@ -329,19 +329,19 @@ int rfs_getattr(int inode_num,char *data){
 
 	//extract the fields of the inode
 	int c_ptr = 0;
-	memcpy(buffer + c_ptr,&inode_num,sizeof(int)); //writing the inode number into the buffer
+	memcpy(data + c_ptr,&inode_num,sizeof(int)); //writing the inode number into the buffer
 	c_ptr += sizeof(int);
 
-	memcpy(buffer + c_ptr,&(current_inode->size),sizeof(int)); // writing the size of the file in bytes to the buffer
+	memcpy(data + c_ptr,&(current_inode->size),sizeof(int)); // writing the size of the file in bytes to the buffer
 	c_ptr += sizeof(int);
 
-	memcpy(buffer + c_ptr,&(current_inode->tstamp),sizeof(struct timestamp)); //writes the timestamp to the buffer
+	memcpy(data + c_ptr,&(current_inode->tstamp),sizeof(struct timestamp)); //writes the timestamp to the buffer
 	c_ptr += sizeof(struct timestamp);
 
-	memcpy(buffer + c_ptr,&(current_inode->type),sizeof(int)); //writes the type of the file to the buffer
+	memcpy(data + c_ptr,&(current_inode->type),sizeof(int)); //writes the type of the file to the buffer
 	c_ptr += sizeof(int);
 
-	memcpy(buffer + c_ptr,current_inode->direct,sizeof(POINTERS_PER_INODE * sizeof(int)));	
+	memcpy(data + c_ptr,current_inode->direct,sizeof(POINTERS_PER_INODE * sizeof(int)));	
 	c_ptr += sizeof(POINTERS_PER_INODE * sizeof(int));
 	return 1;
 }
