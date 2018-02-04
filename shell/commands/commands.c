@@ -54,3 +54,8 @@ int stat_file(char *file){
     printf("    Modified Time : %ld\n", filestat->tstamp.mtime);
     return 1;
 }
+
+void current_working_dir(){
+    printf("%s\n", present_working_directory());
+    return ;
+}

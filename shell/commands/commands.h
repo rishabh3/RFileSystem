@@ -10,4 +10,5 @@
 int list(char* path);
 int touch(char* file);
 int stat_file(char* file);
+void current_working_dir();
 #endif

@@ -132,6 +132,15 @@ int main(int argc, char *argv[]){
             } else {
 				printf("use: stat <filename>\n");
 			}
+		} else if(!strcmp(cmd,"pwd")) {
+			if(disk == NULL){
+				printf("stat failed! No disk found!\n");
+			}
+			if(args==1) {
+				current_working_dir();
+            } else {
+				printf("use: pwd\n");
+			}
 		} else if(!strcmp(cmd, "disksize")){
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("disksize failed! No disk found!\n");
