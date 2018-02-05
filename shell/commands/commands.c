@@ -33,3 +33,29 @@ int touch(char* file){
     }
     return 1;
 }
+
+int stat_file(char *file){
+    // printf("%s\n", file);
+    struct vrfs_stat *filestat = stat(file);
+    if(filestat == NULL){
+        return 0;
+    }
+    printf("File Stat for: %s\n", file);
+    printf("    Inode Number : %d\n", filestat->inode_num);
+    printf("    Size : %d\n", filestat->size);
+    if(filestat->type == 0x01){
+        printf("    Regular File\n");
+    }
+    else{
+        printf("    Directory\n");
+    }
+    printf("    Create Time : %ld\n", filestat->tstamp.ctime);
+    printf("    Access Time : %ld\n", filestat->tstamp.atime);
+    printf("    Modified Time : %ld\n", filestat->tstamp.mtime);
+    return 1;
+}
+
+void current_working_dir(){
+    printf("%s\n", present_working_directory());
+    return ;
+}

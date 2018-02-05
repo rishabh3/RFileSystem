@@ -1,11 +1,11 @@
 cat
-ls
+ls : Done
 pwd
 mkdir
 rmdir
 rm
-mkfs
-touch
+mkfs : Done
+touch : Done
 cd
-clear
+clear : Done
 exit : Done
