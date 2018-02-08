@@ -105,6 +105,16 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: touch <file>\n");
 			}
+		} else if(!strcmp(cmd,"mkdir")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("mkdir failed! No disk found!\n");
+			}
+			if(args==2) {
+				strcat(arg1, "\0");
+				mkdir(arg1);
+			} else {
+				printf("use: mkdir <dirname>\n");
+			}
 		} else if(!strcmp(cmd,"mkfs")) {
 			if(disk == NULL){
 				printf("mkfs failed! No disk found!\n");

@@ -535,7 +535,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 		int bytes_written;
 		int next_block_num = current_inode->direct[current_inode->allocated];
 		// Check if there is any direct block associated with inode.
-		if(current_inode->direct[0] < NUM_INODE_BLOCKS+1){
+		if(current_inode->direct[0] < NUM_INODE_BLOCKS+1 || current_inode->direct[0] > NUM_BLOCKS){
 			next_block_num = get_next_free_disk_block_num();
 			current_inode->direct[loop_var] = next_block_num;
 		}
@@ -569,7 +569,9 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 					}
 					i += bytes_written;
 				}while(i < DATA_SIZE);
+				memset(d_block.buffer + (bytes_written)*count, '\0', (BLK_SIZE - (sizeof(int))));
 				memcpy(d_block.buffer+bytes_written*count, data + c_ptr, bytes_written);
+				// memset(d_block.buffer + (bytes_written)*(count+1), '\0', (BLK_SIZE - (sizeof(int))));
 			}
 		}
 		write_data_to_disk(next_block_num,(void *)(&(d_block.buffer)),sizeof(union rfs_block));

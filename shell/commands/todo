@@ -1,6 +1,6 @@
 cat
 ls : Done
-pwd
+pwd : Done
 mkdir
 rmdir
 rm
