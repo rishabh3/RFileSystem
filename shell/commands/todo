@@ -1,7 +1,7 @@
 cat
 ls : Done
 pwd : Done
-mkdir
+mkdir : Done
 rmdir
 rm
 mkfs : Done
@@ -9,3 +9,4 @@ touch : Done
 cd
 clear : Done
 exit : Done
+command to write to file
