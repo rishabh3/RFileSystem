@@ -3,10 +3,11 @@ ls : Done
 pwd : Done
 mkdir : Done
 rmdir
-rm
+rm : Done
 mkfs : Done
 touch : Done
-cd
+cd : Done
 clear : Done
 exit : Done
+stat : Done
 command to write to file

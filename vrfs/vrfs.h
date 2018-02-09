@@ -34,6 +34,8 @@ struct dentry;
 char rootdirname[MAX_SIZE];
 char current_working_directory[MAX_PATH_SIZE];
 int rootinode;
+int currentinode;
+
 struct dentry{
     char name[MAX_SIZE];
     int inode_num;

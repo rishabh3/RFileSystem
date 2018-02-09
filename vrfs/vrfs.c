@@ -12,6 +12,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int validate_dirname(char *dirname, int *inodenum){
+    for(int i = 0;i < dentry_index;i++){
+        if(!strcmp(dirname, dirdata[i].name)){
+            *inodenum = dirdata[i].inode_num;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 
 void convert_struct_to_string(char * data, struct dentry * direntry, unsigned long int size){
@@ -58,7 +68,9 @@ int make_rfs(char *username){
         memcpy(rootdirname, username, strlen(username));
         // strcat(rootdirname, "/");
         memcpy(current_working_directory, rootdirname, strlen(username));
+        strcat(current_working_directory, "/");
         rootinode = inode_num;
+        currentinode = inode_num;
         return 1;
     }
     return 0;
@@ -71,10 +83,7 @@ int create(char *filename){
     seconds = time(NULL);
     int inode_num;
     char data[BLK_SIZE];
-    int parent_inode_num = rootinode;
-    char *cwd;
-    //Get the current Directory.
-    cwd = present_working_directory();
+    int parent_inode_num = currentinode;
     //Create a Inode for the file.
     inode_num = rfs_create(seconds, F_TYPE); // This handles for the file
     //Add the dentry data to the data of the current directory.
@@ -110,7 +119,7 @@ int read_dir(char *dirname){
     int loop_var = 0;
     int current_pos;
     char data[BLK_SIZE];
-    char *readpointer;
+    int inode_num;
     if(!strcmp(dirname, rootdirname)){
         if(!rfs_read(rootinode, data, BLK_SIZE, 0)){
             return 0;
@@ -122,8 +131,25 @@ int read_dir(char *dirname){
             // readpointer += current_pos;
             loop_var++;
         }
+        currentinode = rootinode;
+    }
+    else{
+        
+        if(validate_dirname(dirname, &inode_num)){
+            if(!rfs_read(inode_num, data, BLK_SIZE, 0)){
+                return 0;
+            }
+            // readpointer = data;
+            while(data[current_pos] != '\0'){
+                current_pos = loop_var*sizeof(struct dentry);
+                convert_string_to_struct(dirdata+loop_var, data + current_pos, sizeof(struct dentry));
+                // readpointer += current_pos;
+                loop_var++;
+            }
+        }
     }
     dentry_index = loop_var;
+    currentinode = inode_num;
     return 1;
     // return NULL;
 }
@@ -158,12 +184,7 @@ struct vrfs_stat *stat(char *filename){
 }
 
 int get_inode_num_name(){
-    for(int i = 0 ; i < dentry_index ; i++){
-        if(!strcmp(dirdata[i].name, ".")){
-            return dirdata[i].inode_num;
-        }
-    }
-    return -1;
+    return currentinode;
 }
 
 int make_directory(char* dirname){
@@ -203,6 +224,93 @@ int make_directory(char* dirname){
     convert_struct_to_string(data, &newdir, sizeof(struct dentry));
     if(!rfs_write(inode_num, data, sizeof(struct dentry), 0)){
         return 0;
+    }
+    return 1;
+}
+
+
+// Some helper functions
+char* get_last_dir_in_path(char* path){
+    char *last_dir = (char *)malloc(sizeof(char)*MAX_SIZE);
+    char* dir = strtok(path, "/");
+    while(dir != NULL){
+        dir = strtok(NULL, "/");
+        if(dir != NULL){
+            memset(last_dir, '\0', MAX_SIZE);
+            memcpy(last_dir, dir, strlen(dir));
+        }
+    }
+    return last_dir;
+}
+
+void append_to_current_working_dir(char *dirname){
+    char* cwd = present_working_directory();
+    strcat(cwd, dirname);
+    strcat(cwd, "/");
+}
+
+void modify_current_working_dir(){
+    char* cwd = present_working_directory();
+    int pos = -1;
+    for(int i = strlen(cwd) - 1;i >= 0;i--){
+        if(cwd[i] == '/'){
+           pos++;     
+        }
+        if(pos == 1){
+            pos = i+1;
+            break;
+        }
+    }
+    int len = strlen(cwd) - pos;
+    memset(cwd+pos, '\0', len+1);
+}
+
+int change_directory(char* dirname){
+    /*
+        Changes the directory to another directory. 
+    */
+    if(!strcmp(dirname, ".")){
+        return 1;
+    }
+    char pathbuf[MAX_PATH_SIZE];
+    char *cwd = present_working_directory();
+    int inode_num;
+    memset(pathbuf, '\0', MAX_PATH_SIZE);
+    memcpy(pathbuf, cwd, strlen(cwd));
+
+    char* last_dir = get_last_dir_in_path(pathbuf);
+    if(!strcmp(rootdirname, last_dir)){
+        // Perform movement for the root
+        if(currentinode == rootinode){
+            // No need to call readdir
+            // check if dirname in dirdata.
+            if(validate_dirname(dirname, &inode_num)){
+                append_to_current_working_dir(dirname);
+                read_dir(dirname);
+            }
+            else{
+                fprintf(stderr, "No such Directory!\n");
+                return 0;
+            }
+        }
+    }
+    else{
+        if(!strcmp(dirname, "..")){
+            if(currentinode == rootinode){
+                return 0;
+            }
+            modify_current_working_dir();
+            read_dir(dirname);            
+        }
+        else if(validate_dirname(dirname, &inode_num)){
+            append_to_current_working_dir(dirname);
+            read_dir(dirname);
+            currentinode = inode_num;
+        }
+        else{
+            fprintf(stderr, "No such Directory!\n");
+            return 0;
+        }
     }
     return 1;
 }

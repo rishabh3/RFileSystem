@@ -11,8 +11,8 @@
 
 extern int dentry_index;
 
-int list(char* path){
-    read_dir(path);
+int list(){
+    read_dir(".");
     if(dentry_index == 0 || dirdata == NULL){
         printf("\n");
         return 0;
@@ -60,6 +60,13 @@ void current_working_dir(){
 
 int mkdir(char* dirname){
     if(!make_directory(dirname)){
+        return 0;
+    }
+    return 1;
+}
+
+int cd(char* dirname){
+    if(!change_directory(dirname)){
         return 0;
     }
     return 1;
