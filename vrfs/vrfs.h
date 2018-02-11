@@ -56,7 +56,7 @@ int make_directory(char *dirname);
 int remove_directory(char* dirname);
 int read_dir(char *dirname);
 int change_directory(char *dirname);
-
+int open(char *filename);
 int make_rfs(char *username);
 
 #endif /* VRFS_VRFS_H_ */

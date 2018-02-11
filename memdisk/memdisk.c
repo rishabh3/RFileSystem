@@ -147,6 +147,7 @@ int disk_write(int block_num, char* data){
 	memcpy(disk[block_num].disk_data, data, sizeof(disk[block_num].disk_data));
 	disk[block_num].in_use = IN_USE;
 	nwrites++;
+	num_blocks--;
 	return 1;
 }
 

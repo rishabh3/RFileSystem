@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int validate_dirname(char *dirname, int *inodenum){
+int validate_dirname(char *name, int *inodenum){
     for(int i = 0;i < dentry_index;i++){
-        if(!strcmp(dirname, dirdata[i].name)){
+        if(!strcmp(name, dirdata[i].name)){
             *inodenum = dirdata[i].inode_num;
             return 1;
         }
@@ -107,6 +107,17 @@ int create(char *filename){
     //Return
     return 1; 
 }
+
+
+int open(char *filename){
+    int inode_num;
+    if(validate_dirname(filename, &inode_num)){
+        return inode_num;
+    }
+    return -1;
+}
+
+
 
 char * present_working_directory(){
     return current_working_directory;
