@@ -10,6 +10,7 @@
 #include "../util.h"
 #define MAX_SIZE 32
 #define MAX_PATH_SIZE 1024
+#define BUFFER_SIZE 1024
 #define MAX_DENTRY 25
 
 #define NUM_DIRECT 1 << 2
@@ -33,11 +34,15 @@ struct dentry;
 char rootdirname[MAX_SIZE];
 char current_working_directory[MAX_PATH_SIZE];
 int rootinode;
+int currentinode;
+
 struct dentry{
     char name[MAX_SIZE];
     int inode_num;
 };
 
+struct dentry dirdata[MAX_DENTRY];
+int dentry_index;
 /* File Operations */
 int create(char *filename);
 bool read(char *filename, char *data, rsize_t size);
@@ -49,9 +54,9 @@ struct vrfs_stat *stat(char *filename);
 char* present_working_directory();
 int make_directory(char *dirname);
 int remove_directory(char* dirname);
-int read_dir(char *dirname, int* size, struct dentry *result);
+int read_dir(char *dirname);
 int change_directory(char *dirname);
-
+int open(char *filename);
 int make_rfs(char *username);
 
 #endif /* VRFS_VRFS_H_ */

@@ -9,21 +9,19 @@
 #include <stdlib.h>
 #include "../../vrfs/vrfs.h"
 
-int list(char* path){
-    int size;
-    struct dentry *result = (struct dentry *)malloc((MAX_DENTRY)*(sizeof(struct dentry)));
-    read_dir(path, &size, result);
-    if(size == 0 || result == NULL){
+extern int dentry_index;
+
+int list(){
+    read_dir(".");
+    if(dentry_index == 0 || dirdata == NULL){
         printf("\n");
         return 0;
     }
 
-    for(int i = 0;i < size;i++){
-        printf("%s\t", result[i].name);
+    for(int i = 0;i < dentry_index;i++){
+        printf("%s\t", dirdata[i].name);
     }
     printf("\n");
-    free(result);
-    result = NULL;
     return 1;
 }
 
@@ -58,4 +56,18 @@ int stat_file(char *file){
 void current_working_dir(){
     printf("%s\n", present_working_directory());
     return ;
+}
+
+int mkdir(char* dirname){
+    if(!make_directory(dirname)){
+        return 0;
+    }
+    return 1;
+}
+
+int cd(char* dirname){
+    if(!change_directory(dirname)){
+        return 0;
+    }
+    return 1;
 }

@@ -8,9 +8,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "rfs.h"
+#include "rfsdisk.h"
 #include <time.h>
-#include "../memdisk/memdisk.h"
+#include "../disk/disk.h"
 
 #define is_set(flag)	(flag == 1 ? 1 : 0) // Macro to check if flag is set.
 static int num_inode_block = 0; // Current Inode Block in use keep track the inode block in use.
@@ -25,6 +25,42 @@ void convert_union_to_string(void *block_data, char* data, unsigned long int siz
 	*/
 
 	memcpy(data, block_data, size);
+}
+
+void unsetbitmap(int i){
+	bitmap[i] = '0';
+}
+
+void setbitmap(int i){
+	bitmap[i] = '1';
+}
+
+int map_block_num(int block_no){
+	return block_no - NUM_INODE_BLOCKS - 1;
+}
+
+int map_bitmap_index(int index){
+	return index + NUM_INODE_BLOCKS + 1;
+}
+
+int get_next_free_disk_block_num(){
+	int index = bitmap_in_use;
+	if(bitmap_in_use == NUM_D_BLOCKS){
+		for(int i = 0;i < NUM_D_BLOCKS;i++){
+			if(bitmap[i] == '0'){
+				index = i;
+				setbitmap(i);
+				break;
+			}
+		}
+	}
+	else{
+		bitmap_in_use++;
+		setbitmap(index);
+	}
+	// modify the index by adding offset.
+	index = map_bitmap_index(index);
+	return index;
 }
 
 void manage_inode_counters(){
@@ -146,6 +182,9 @@ void rfs_debug(){
 	printf("	%d blocks\n", s_block.super.num_blocks);
 	printf(" 	%d inode blocks\n", s_block.super.num_inodeblocks);
 	printf(" 	%d inodes \n", s_block.super.num_inodes);
+    printf(" 	%d data blocks used \n", s_block.super.datablock_used);
+    printf(" 	%d inodes used \n", s_block.super.inode_used);
+    printf(" 	%d inode blocks used \n", s_block.super.inodeblock_used);
 	int first_inode_block = 1;
 	memset(data, ' ', BLK_SIZE);
 	for(int i = first_inode_block;i <= num_inode_block+1;i++){
@@ -178,48 +217,73 @@ int rfs_format(){
 
 	int num_inodeblocks = (int)((10*NUM_BLOCKS)/100); // Keeping only 10% as inodes.
 	union rfs_block block, temp;
-	if(!disk || disk_mounted){
+	if(disk == NULL || disk_mounted){
 		return 0;
-	}
-	else if(new_disk){
-		block.super.magic_num = SUPER_MAGIC;
-		block.super.num_blocks = NUM_BLOCKS;
-		block.super.num_inodeblocks = num_inodeblocks;
-		block.super.num_inodes = (INODES_PER_BLOCK)*num_inodeblocks;
-		if(!write_data_to_disk(SUPER_BLOCK, (void *)(&(block.super)), sizeof(struct rfs_superblock))){
-			return 0;
-		}
-		for(int i = 1;i <= num_inodeblocks;i++){
-			unset_invalid_bit(&(temp));
-			if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
-				return 0;
-			}
-		}
-		new_disk = FALSE;
 	}
 	else{
 		char data[BLK_SIZE];
 		get_data_frm_disk(SUPER_BLOCK, data);
 		convert_string_to_union(data, (&(block.super)), sizeof(struct rfs_superblock));
-		block.super.num_blocks = NUM_BLOCKS;
-		block.super.num_inodeblocks = num_inodeblocks;
-		block.super.num_inodes = INODES_PER_BLOCK * num_inodeblocks;
-		if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
-			return 0;
-		}
-		memset(data, ' ', BLK_SIZE);
-		for(int i = 1;i <= num_inodeblocks;i++){
-			get_data_frm_disk(i, data);
-			convert_string_to_union(data, (&(temp)), sizeof(struct rfs_inode));
-			unset_invalid_bit(&temp);
-			if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
-				return 0;
-			}
-		}
+        if(block.super.magic_num != SUPER_MAGIC){
+            block.super.magic_num = SUPER_MAGIC;
+            block.super.num_blocks = NUM_BLOCKS;
+            block.super.num_inodeblocks = num_inodeblocks;
+            block.super.num_inodes = (INODES_PER_BLOCK)*num_inodeblocks;
+            block.super.inodeblock_used = 0;
+            block.super.inode_used = 0;
+            block.super.datablock_used = 0;
+            if(!write_data_to_disk(SUPER_BLOCK, (void *)(&(block.super)), sizeof(struct rfs_superblock))){
+                return 0;
+            }
+            for(int i = 1;i <= num_inodeblocks;i++){
+                unset_invalid_bit(&(temp));
+                if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
+                    return 0;
+                }
+            }
+        }
+        else{
+            block.super.num_blocks = NUM_BLOCKS;
+            block.super.num_inodeblocks = num_inodeblocks;
+            block.super.num_inodes = INODES_PER_BLOCK * num_inodeblocks;
+            block.super.inodeblock_used = 0;
+            block.super.inode_used = 0;
+            block.super.datablock_used = 0;
+            if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
+                return 0;
+            }
+            memset(data, ' ', BLK_SIZE);
+            for(int i = 1;i <= num_inodeblocks;i++){
+                get_data_frm_disk(i, data);
+                convert_string_to_union(data, (&(temp)), sizeof(struct rfs_inode));
+                unset_invalid_bit(&temp);
+                if(!write_data_to_disk(i, (void *)&(temp.inode), sizeof(union rfs_block))){
+                    return 0;
+                }
+            }
+        }
 	}
 	reset_stats();
 	// Note : Data is not erased.
 	return 1;
+}
+
+void update_metadata(){
+	union rfs_block block;
+	char data[BLK_SIZE];
+	get_data_frm_disk(SUPER_BLOCK, data);
+	convert_string_to_union(data, (void*)(&(block.super)), sizeof(struct rfs_superblock));
+	if(block.super.magic_num != SUPER_MAGIC){
+		return ;
+	}
+    else{
+		block.super.inodeblock_used = num_inode_block;
+		block.super.inode_used = num_inode;
+		block.super.datablock_used = bitmap_in_use;
+		if(!write_data_to_disk(SUPER_BLOCK, (void *)&(block.super), sizeof(struct rfs_superblock))){
+			return ;
+		}
+    }
 }
 
 int rfs_mount(){
@@ -228,12 +292,12 @@ int rfs_mount(){
 		checks if disk has filesystem, if present read the super block and build free block bitmap
 	*/
 
-	if(new_disk || disk_mounted){
+	if(disk_mounted){
 		return 0;
 	}
 	disk_mount();
-	if(!disk){
-			return 0;
+	if(disk == NULL){
+		return 0;
 	}
 	union rfs_block block;
 	char data[BLK_SIZE];
@@ -242,6 +306,17 @@ int rfs_mount(){
 	if(block.super.magic_num != SUPER_MAGIC){
 		return 0;
 	}
+    else{
+        bitmap = (char *)malloc(sizeof(char) * NUM_D_BLOCKS);
+        memset(bitmap, '0', NUM_D_BLOCKS);
+        for(int i = 0;i < block.super.datablock_used;i++){
+            bitmap[i] = '1';
+        }
+        bitmap_in_use = block.super.datablock_used;
+		num_inode_block = block.super.inodeblock_used;
+		num_inode = block.super.inode_used;
+		inode_num = (num_inode_block - 1)*INODES_PER_BLOCK + num_inode + 1;
+    }
 	return 1;
 }
 
@@ -319,29 +394,8 @@ int rfs_delete(int inode_num){
 	if(disk_mounted == FALSE || disk == NULL){
 		return 0;
 	}
-	//getting location of inode
-	int block_number;
-	int inode_index;
-	seek_inode_block_inode_num(inode_num,&block_number,&inode_index);
-	//fetching the required inode
-	char buffer[BLK_SIZE];
-	union rfs_block block;
-	get_data_frm_disk(block_number,buffer);
-	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block));	
-	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode
-	//checking if a valid inode or not
-	if(!is_set(current_inode->isvalid)){
-		fprintf(stderr,"Cannot delete. File does not exist.\n");
-		return 0;
-	}
-	for(int i=0;i<current_inode->allocated;i++){
-		//setting all the allocated blocks to usable now
-		free_disk_block(current_inode->direct[i]);
-	}
-	current_inode->isvalid = 0;
-	return 1;
+	return 0;
 }
-
 void rfs_inode_debug(int inode_num){
 
 	/*
@@ -517,11 +571,6 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 		return 0;
 	}
 
-	if(data == NULL){
-		fprintf(stderr,"Invalid buffer provided\n");
-		return 0;
-	}
-
 	//function will write 'length' amount of bytes from the buffer data
 	int block_index; //which inode block
 	int inode_index; //offset from the inode block
@@ -540,7 +589,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode	
 	//first step is to check if valid bit is set
 	if(!is_set(current_inode->isvalid)){
-		fprintf(stderr,"Invalid inode to write from. Inode number: %d is not in use.\n",inode_num);
+		fprintf(stderr,"Invalid inode to write to. Inode number: %d is not in use.\n",inode_num);
 		return 0;
 	}
 	/*CURRENTLY IGNORING OFFSET
@@ -549,7 +598,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 
 	//now to read 'length' bytes from an offset(?) from the direct pointers
 	int c_ptr = 0; //offset to write into in destination buffer
-	const int fetch_size = (BLK_SIZE)- sizeof(int); //the max amount of bytes each data block can hold
+	const int fetch_size = (BLK_SIZE); //the max amount of bytes each data block can hold
 	int blocks_to_write_into = length / fetch_size; //gets the number of blocks to write into
 	int loop_var = (current_inode->allocated < POINTERS_PER_INODE) ? current_inode->allocated : -1; //loop variable to iterate over the required blocks to write into
 	
@@ -629,11 +678,12 @@ int rfs_unmount(){
 	}
 
 	disk_unmount();
+	update_metadata();
 	if(bitmap != NULL){
 		free(bitmap);
-		bitmap = 0x00;
+		bitmap = NULL;
 	}
-	delete_disk();
+	disk_close();
 	return 1;
 }
 
