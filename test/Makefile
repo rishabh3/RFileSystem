@@ -23,4 +23,4 @@ test: $(OBJDIR)/memdisk.o $(OBJDIR)/rfs.o $(OBJDIR)/vrfs.o  $(OBJDIR)/testmkdir.
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	$(RM) rshell $(OBJDIR)/*.o *~ ../memdisk/*.gch ../rfs/*.gch ../vrfs/*.gch
+	$(RM) test $(OBJDIR)/*.o *~ ../memdisk/*.gch ../rfs/*.gch ../vrfs/*.gch
