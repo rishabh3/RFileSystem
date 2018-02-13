@@ -226,13 +226,35 @@ bool write(char *filename,char *data,size_t size){
     } 
 }
 //function to remove a file from the fs. returns 1 if successful, 0 if failed
-int rm_file(char *filename){
+bool rm_file(char *filename){
     //check for a filename provided
     if(filename == NULL){
         fprintf(stderr,"Please specify a valid filename.\n");
-        return 0;
+        return FALSE;
     }
     /*
-    * deletion policy: find the required inode and set the 
+    * deletion policy: utilize the underlying rfs_delete function
+    * basically we find the inode and set the isvalid = 0
+    * scan through the blocks and set the inuse bits to 0
     */
+    int size;
+    struct dentry result[MAX_DENTRY];
+    read_dir(current_working_directory,&size,result);
+    if(!size){
+        fprintf(stderr,"Failed to read directory.\n");
+        return FALSE;
+    }
+    else{
+        for(int i=0;i<size;i++){
+            if(!strcmp(result[i].name,filename)){
+                if(!rfs_delete(result[i].inode_num)){
+                    fprintf(stderr,"Failed to delete file: rfs_delete failed.\n");
+                    return FALSE;
+                }
+                return TRUE;
+            }
+        }
+        fprintf(stderr,"Failed to delete file: %s does not exist.\n",filename);
+        return FALSE;
+    }
 }

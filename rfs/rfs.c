@@ -319,8 +319,29 @@ int rfs_delete(int inode_num){
 	if(disk_mounted == FALSE || disk == NULL){
 		return 0;
 	}
-	return 0;
+	//getting location of inode
+	int block_number;
+	int inode_index;
+	seek_inode_block_inode_num(inode_num,&block_number,&inode_index);
+	//fetching the required inode
+	char buffer[BLK_SIZE];
+	union rfs_block block;
+	get_data_frm_disk(block_number,buffer);
+	convert_string_to_union(buffer,(void *)&block.inode,sizeof(union rfs_block));	
+	struct rfs_inode *current_inode = &(block.inode[inode_index]); //pointer to the required inode
+	//checking if a valid inode or not
+	if(!is_set(current_inode->isvalid)){
+		fprintf(stderr,"Cannot delete. File does not exist.\n");
+		return 0;
+	}
+	for(int i=0;i<current_inode->allocated;i++){
+		//setting all the allocated blocks to usable now
+		free_disk_block(current_inode->direct[i]);
+	}
+	current_inode->isvalid = 0;
+	return 1;
 }
+
 void rfs_inode_debug(int inode_num){
 
 	/*
@@ -540,7 +561,7 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 		int bytes_written;
 		int next_block_num = current_inode->direct[current_inode->allocated];
 		// Check if there is any direct block associated with inode.
-		if(current_inode->direct[0] < NUM_INODE_BLOCKS+1){
+		if(current_inode->direct[0] < NUM_INODE_BLOCKS+1 || current_inode->direct[0] > NUM_BLOCKS){
 			next_block_num = get_next_free_disk_block_num();
 			current_inode->direct[loop_var] = next_block_num;
 		}
