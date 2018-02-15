@@ -4,14 +4,14 @@ OBJDIR = ../bin
 
 all: test
 
-$(OBJDIR)/testmkdir.o: testmkdir.c
+$(OBJDIR)/test.o: test.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJDIR)/memdisk.o:
-	$(MAKE) -C ../memdisk/
+$(OBJDIR)/disk.o:
+	$(MAKE) -C ../disk/
 
-$(OBJDIR)/rfs.o:
-	$(MAKE) -C ../rfs/
+$(OBJDIR)/rfsdisk.o:
+	$(MAKE) -C ../rfsdisk/
 
 $(OBJDIR)/vrfs.o:
 	$(MAKE) -C ../vrfs/
@@ -19,8 +19,8 @@ $(OBJDIR)/vrfs.o:
 $(OBJDIR)/commands.o:
 	$(MAKE) -C ../shell/commands/
 
-test: $(OBJDIR)/memdisk.o $(OBJDIR)/rfs.o $(OBJDIR)/vrfs.o  $(OBJDIR)/testmkdir.o $(OBJDIR)/commands.o
+test: $(OBJDIR)/disk.o $(OBJDIR)/rfsdisk.o $(OBJDIR)/vrfs.o  $(OBJDIR)/test.o $(OBJDIR)/commands.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	$(RM) test $(OBJDIR)/*.o *~ ../memdisk/*.gch ../rfs/*.gch ../vrfs/*.gch
+	$(RM) test $(OBJDIR)/*.o *~ ../disk/*.gch ../rfsdisk/*.gch ../vrfs/*.gch

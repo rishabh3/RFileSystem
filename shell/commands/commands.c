@@ -11,8 +11,9 @@
 
 extern int dentry_index;
 
-int list(){
-    read_dir(".");
+int list(char *dirname){
+    if(!read_dir("."))
+        read_dir(dirname);
     if(dentry_index == 0 || dirdata == NULL){
         printf("\n");
         return 0;

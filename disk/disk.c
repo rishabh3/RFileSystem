@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+
 
 #include "disk.h"
 
@@ -36,14 +38,33 @@ void sanity_check(int block_index, char * data){
 	}
 }
 
-void disk_init(char *filename){
+void disk_init(char *filename, char *mode){
 	/*
 		Initialize a new disk by allocating some memory and setting up the flags.
 	*/
-	disk = fopen(filename, "r+");
-    if(!disk) fprintf(stderr, "Failed to initialize the disk!\n");
-
-    ftruncate(fileno(disk), NUM_BLOCKS*DISK_BLK_SIZE);
+	if(disk == NULL){
+		disk = fopen(filename, mode);
+		memcpy(file_name, filename, strlen(filename));
+		file_name[strlen(filename)] = '\0';	
+	}
+	else{
+		fclose(disk);
+		disk = NULL;
+		disk = fopen(filename, mode);
+	}
+    if(!disk) {
+		fprintf(stderr, "Failed to initialize the disk!\n");
+		return ;
+	}
+	struct stat bf;
+	if(stat(fileno(disk), &bf) != 0){
+		fprintf(stderr, "Failed to initialize the disk!\n");
+		fclose(disk);
+		disk = NULL;
+		return ;
+	}
+	if(bf.st_size == 0)
+    	ftruncate(fileno(disk), NUM_BLOCKS*DISK_BLK_SIZE);
 
     num_blocks = NUM_BLOCKS;
     
@@ -84,6 +105,7 @@ void disk_close(){
     fprintf(stdout, "%d disk block reads\n",nreads);
 	fprintf(stdout, "%d disk block writes\n",nwrites);
 	fclose(disk);
+	disk = NULL;
 	reset_stats();
 }
 
@@ -120,7 +142,7 @@ int disk_write(int block_num, char* data){
 		Disk Write Functionality
 	*/
 
-	sanity_check(block_num, data, WRITE);
+	sanity_check(block_num, data);
 	
     fseek(disk, block_num*DISK_BLK_SIZE, SEEK_SET);
 

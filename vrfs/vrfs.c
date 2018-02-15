@@ -13,6 +13,9 @@
 #include <stdlib.h>
 
 int validate_dirname(char *name, int *inodenum){
+    if(dentry_index == 0){
+        return 0;
+    }
     for(int i = 0;i < dentry_index;i++){
         if(!strcmp(name, dirdata[i].name)){
             *inodenum = dirdata[i].inode_num;
@@ -42,7 +45,8 @@ int make_rfs(char *username){
     unsigned long int seconds;
     seconds = (unsigned long int)time(NULL);
     int inode_num;
-    if(rfs_mount()){
+    int t = rfs_mount();
+    if(t == 1){
         // Create a directory for the user
         inode_num = rfs_create(seconds,  DIR_TYPE);
         // Name of the directory is username
@@ -71,6 +75,14 @@ int make_rfs(char *username){
         strcat(current_working_directory, "/");
         rootinode = inode_num;
         currentinode = inode_num;
+        return 1;
+    }
+    else if(t == 2){
+        memcpy(rootdirname, username, strlen(username));
+        memcpy(current_working_directory, rootdirname, strlen(username));
+        //  strcat(current_working_directory, "/");
+        rootinode = t-1;
+        currentinode = t-1;
         return 1;
     }
     return 0;
@@ -158,6 +170,9 @@ int read_dir(char *dirname){
                 loop_var++;
             }
         }
+        else{
+            return 0;
+        }
     }
     dentry_index = loop_var;
     currentinode = inode_num;
@@ -209,7 +224,7 @@ bool read(char *filename,char *data,size_t size){
     //fetching the required inode.
     struct dentry result[MAX_DENTRY];
     int len;
-    read_dir(current_working_directory,&len,result);
+    read_dir(current_working_directory);
     if(len == 0){
         fprintf(stderr,"Failed to read directory\n");
         return FALSE;
@@ -244,7 +259,7 @@ bool write(char *filename,char *data,size_t size){
     //obtaining the required inode
     struct dentry result[MAX_DENTRY];
     int len;
-    read_dir(current_working_directory,&len,result);
+    read_dir(current_working_directory);
     if(len == 0){
         fprintf(stderr,"Failed to read directory\n");
         return FALSE;
@@ -277,7 +292,7 @@ bool rm_file(char *filename){
     */
     int size;
     struct dentry result[MAX_DENTRY];
-    read_dir(current_working_directory,&size,result);
+    read_dir(current_working_directory);
     if(!size){
         fprintf(stderr,"Failed to read directory.\n");
         return FALSE;

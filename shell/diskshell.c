@@ -8,8 +8,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "commands/commands.h"
-#include "../memdisk/memdisk.h"
-#include "../rfs/rfs.h"
+#include "../disk/disk.h"
+#include "../rfsdisk/rfsdisk.h"
 #include "../vrfs/vrfs.h"
 #define MAX_LIMIT 1024
 
@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
 	char arg1[MAX_LIMIT];
 	char arg2[MAX_LIMIT];
     char dirpath[MAX_LIMIT];
+    int count = 0;
 	int inumber, result, args;
     dirpath[0] = ' ';
 
@@ -27,8 +28,11 @@ int main(int argc, char *argv[]){
         return -1;
     }
     printf("Welcome, %s to the RFileSystem Shell. \n", argv[1]);
-    disk_init();
-    printf("opened in-memory emulated disk image.\n");
+    disk_init("diskfile", "r+");
+    if(disk == NULL){
+        return -1;
+    }
+    printf("opened file emulated disk image.\n");
     while(1){
         printf("rfs%s> ", dirpath);
         fflush(stdout);
@@ -80,9 +84,10 @@ int main(int argc, char *argv[]){
 			}
 			if(args==1) {
 				if(rfs_unmount()) {
+					memset(dirpath, '\0', MAX_LIMIT);
+					dirpath[0] = ' ';
+					count = 0;
 					printf("disk unmounted.\n");
-                    printf("Bye\n");
-                    break;
 				} else {
 					printf("unmount failed!\n");
 				}
@@ -135,13 +140,16 @@ int main(int argc, char *argv[]){
                     printf("Error in making the RFileSystem!\n");
                 }
                 else{
-                    strcat(dirpath, argv[1]);
-                    strcat(dirpath, "/");
+                    if(count == 0){
+                        strcat(dirpath, argv[1]);
+                        strcat(dirpath, "/");
+                    }
                     printf("RFileSystem has been made and mounted on disk!\n");
                 }
             } else {
 				printf("use: mkfs\n");
 			}
+            count++;
 		} else if(!strcmp(cmd,"stat")) {
 			if(disk == NULL){
 				printf("stat failed! No disk found!\n");
@@ -231,7 +239,7 @@ int main(int argc, char *argv[]){
 		}
     }
     if(disk != NULL){
-        rfs_unmount();
+        disk_close();
         printf("disk unmounted.\n");
     }
     return 0;

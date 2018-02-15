@@ -7,7 +7,7 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 #define NUM_BLOCK_PER_FILE 1 << 2
-int list();
+int list(char * dirname);
 int touch(char* file);
 int stat_file(char* file);
 void current_working_dir();
