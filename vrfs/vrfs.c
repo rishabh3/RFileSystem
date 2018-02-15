@@ -224,7 +224,7 @@ bool read(char *filename,char *data,size_t size){
     //fetching the required inode.
     struct dentry result[MAX_DENTRY];
     int len;
-    read_dir(current_working_directory,&len,result);
+    read_dir(current_working_directory);
     if(len == 0){
         fprintf(stderr,"Failed to read directory\n");
         return FALSE;
@@ -259,7 +259,7 @@ bool write(char *filename,char *data,size_t size){
     //obtaining the required inode
     struct dentry result[MAX_DENTRY];
     int len;
-    read_dir(current_working_directory,&len,result);
+    read_dir(current_working_directory);
     if(len == 0){
         fprintf(stderr,"Failed to read directory\n");
         return FALSE;
@@ -292,7 +292,7 @@ bool rm_file(char *filename){
     */
     int size;
     struct dentry result[MAX_DENTRY];
-    read_dir(current_working_directory,&size,result);
+    read_dir(current_working_directory);
     if(!size){
         fprintf(stderr,"Failed to read directory.\n");
         return FALSE;
