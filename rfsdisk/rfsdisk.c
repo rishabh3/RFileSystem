@@ -200,9 +200,14 @@ int unset_invalid_bit(union rfs_block *block){
 		Unset Invalid Bit for the inodes. 
 		To make it available for use next time.
 	*/
-
+	int temp;
 	for(int i = 0;i < INODES_PER_BLOCK; i++){
 		if(is_set(block->inode[i].isvalid)){
+			temp = block->inode[i].allocated;
+			for(int j = 0;j < temp;j++){
+				block->inode[i].direct[j] = -1;
+			}
+			block->inode[i].allocated = 0;
 			block->inode[i].isvalid = 0;
 		}
 	}
@@ -214,9 +219,9 @@ int rfs_format(){
 	/*
 		Writes the Super Block and create all the inodes.
 	*/
-
-	int num_inodeblocks = (int)((10*NUM_BLOCKS)/100); // Keeping only 10% as inodes.
+	int num_inodeblocks = (int)((10*NUM_BLOCKS)/100); // Keeping only 10% as inodes.	
 	union rfs_block block, temp;
+	disk_init(file_name, "w+");
 	if(disk == NULL || disk_mounted){
 		return 0;
 	}
@@ -291,14 +296,14 @@ int rfs_mount(){
 	/*
 		checks if disk has filesystem, if present read the super block and build free block bitmap
 	*/
-
+	if(disk == NULL){
+		return 0;
+	}
 	if(disk_mounted){
 		return 0;
 	}
 	disk_mount();
-	if(disk == NULL){
-		return 0;
-	}
+	
 	union rfs_block block;
 	char data[BLK_SIZE];
 	get_data_frm_disk(SUPER_BLOCK, data);
@@ -315,9 +320,13 @@ int rfs_mount(){
         bitmap_in_use = block.super.datablock_used;
 		num_inode_block = block.super.inodeblock_used;
 		num_inode = block.super.inode_used;
-		inode_num = (num_inode_block - 1)*INODES_PER_BLOCK + num_inode + 1;
+		// if(num_inode_block != 0)
+		inode_num = (num_inode_block)*INODES_PER_BLOCK + num_inode;
+		if(inode_num == 0){
+			return 1;
+		}
     }
-	return 1;
+	return 2;
 }
 
 int rfs_create(unsigned long int ctime, int type){
@@ -683,7 +692,7 @@ int rfs_unmount(){
 		free(bitmap);
 		bitmap = NULL;
 	}
-	disk_close();
+	// disk_close();
 	return 1;
 }
 
