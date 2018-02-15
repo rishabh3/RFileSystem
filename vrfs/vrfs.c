@@ -209,6 +209,109 @@ struct vrfs_stat *stat(char *filename){
     }
 }
 
+//implementing the read system call
+bool read(char *filename,char *data,size_t size){
+    //checking if a filename is provided    
+    if(filename == NULL){
+        fprintf(stderr,"Please specify a filename.\n");
+        return FALSE;
+    }
+    //checking if a buffer is provided
+    if(data == NULL){
+        fprintf(stderr,"Please provide a valid buffer to write into.\n");
+        return FALSE;
+    }
+    //fetching the required inode.
+    struct dentry result[MAX_DENTRY];
+    int len;
+    read_dir(current_working_directory,&len,result);
+    if(len == 0){
+        fprintf(stderr,"Failed to read directory\n");
+        return FALSE;
+    }
+    else{
+        for(int i=0;i<len;i++){
+            if(!strcmp(result[i].name,filename)){
+                if(!rfs_read(result[i].inode_num,data,size,0)){
+                    fprintf(stderr,"Error in read(). rfs_read exited unsuccessfully\n");
+                    return FALSE;
+                }
+                return TRUE;
+            }
+        }
+        fprintf(stderr,"Filename does not match any valid inode.\n");
+        return FALSE;
+    }
+}
+
+//implementing the write system call
+bool write(char *filename,char *data,size_t size){
+    //checking if filename is provided
+    if(filename == NULL){
+        fprintf(stderr,"Please specify a filename to use.\n");
+        return FALSE;
+    }
+    //checking if a valid buffer is provided
+    if(data == NULL){
+        fprintf(stderr,"Please provide a valid buffer to read from\n");
+        return FALSE;
+    }
+    //obtaining the required inode
+    struct dentry result[MAX_DENTRY];
+    int len;
+    read_dir(current_working_directory,&len,result);
+    if(len == 0){
+        fprintf(stderr,"Failed to read directory\n");
+        return FALSE;
+    }
+    else{
+        for(int i=0;i<len;i++){
+            if(!strcmp(result[i].name,filename)){
+                if(!rfs_write(result[i].inode_num,data,size,0)){
+                    fprintf(stderr,"Error in write(). rfs_write exited unsuccessfully\n");
+                    return FALSE;
+                }
+                return TRUE;
+            }
+        }
+        fprintf(stderr,"Filename does not match any valid inode.\n");
+        return FALSE;
+    } 
+}
+//function to remove a file from the fs. returns 1 if successful, 0 if failed
+bool rm_file(char *filename){
+    //check for a filename provided
+    if(filename == NULL){
+        fprintf(stderr,"Please specify a valid filename.\n");
+        return FALSE;
+    }
+    /*
+    * deletion policy: utilize the underlying rfs_delete function
+    * basically we find the inode and set the isvalid = 0
+    * scan through the blocks and set the inuse bits to 0
+    */
+    int size;
+    struct dentry result[MAX_DENTRY];
+    read_dir(current_working_directory,&size,result);
+    if(!size){
+        fprintf(stderr,"Failed to read directory.\n");
+        return FALSE;
+    }
+    else{
+        for(int i=0;i<size;i++){
+            if(!strcmp(result[i].name,filename)){
+                if(!rfs_delete(result[i].inode_num)){
+                    fprintf(stderr,"Failed to delete file: rfs_delete failed.\n");
+                    return FALSE;
+                }
+                return TRUE;
+            }
+        }
+        fprintf(stderr,"Failed to delete file: %s does not exist.\n",filename);
+        return FALSE;
+    }
+}
+
 int get_inode_num_name(){
     return currentinode;
 }

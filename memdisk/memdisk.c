@@ -151,6 +151,19 @@ int disk_write(int block_num, char* data){
 	return 1;
 }
 
-
+int free_disk_block(int block_index){
+	if(block_index < 0){
+		printf("ERROR: block number (%d) is less than 0", block_index);
+		return 0;
+	}
+	if(block_index >= NUM_BLOCKS){
+		printf("ERROR: block number (%d) is greater than disk capacity", block_index);
+		return 0;
+	}
+	if(disk[block_index].in_use){
+		disk[block_index].in_use = 0;
+	}
+	return 1;
+}
 
 

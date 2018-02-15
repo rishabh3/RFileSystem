@@ -47,7 +47,7 @@ int dentry_index;
 int create(char *filename);
 bool read(char *filename, char *data, rsize_t size);
 bool write(char *filename, char *data, rsize_t size);
-int rm_file(char* filename);
+bool rm_file(char* filename);
 struct vrfs_stat *stat(char *filename);
 
 /*Directory Operations*/
