@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../vrfs/vrfs.h"
+#include "../../rfsdisk/rfsdisk.h"
 
 extern int dentry_index;
 
@@ -28,6 +29,13 @@ int list(char *dirname){
 
 int touch(char* file){
     if(!create(file)){
+        return 0;
+    }
+    return 1;
+}
+
+int rm_dir(char *dirname){
+    if(!remove_directory(dirname)){
         return 0;
     }
     return 1;
@@ -68,6 +76,47 @@ int mkdir(char* dirname){
 
 int cd(char* dirname){
     if(!change_directory(dirname)){
+        return 0;
+    }
+    return 1;
+}
+
+int rm(char* filename){
+	if(!rm_file(filename)){
+		return 0;
+	}
+	return 1;
+}
+
+int read_file(char *filename){
+    char data[DATA_SIZE];
+    int inode_num;
+    struct vrfs_stat* statbuf =  stat(filename);
+    if(statbuf->type == DIR_TYPE){
+        fprintf(stderr, "Cannot read a directory!\n");
+        return 0;
+    }
+    if((inode_num = open(filename)) == -1){
+        fprintf(stderr, "No such file!\n");
+        return 0;
+    }
+    if(!readfile(inode_num, data, DATA_SIZE)){
+        fprintf(stderr, "Read from file %s failed!\n", filename);
+        return 0;
+    }
+    fprintf(stdout, "%s", data);
+    fprintf(stdout, "\n");
+    return 1;
+}
+
+int write_file(char* filename, char* data){
+    int inode_num = open(filename);
+    if(inode_num == -1){
+        fprintf(stderr, "No such file!\n");
+        return 0;
+    }
+    if(!writefile(inode_num, data, strlen(data))){
+        fprintf(stderr, "Read from file %s failed!\n", filename);
         return 0;
     }
     return 1;

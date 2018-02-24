@@ -56,14 +56,10 @@ void disk_init(char *filename, char *mode){
 		fprintf(stderr, "Failed to initialize the disk!\n");
 		return ;
 	}
-	struct stat bf;
-	if(stat(fileno(disk), &bf) != 0){
-		fprintf(stderr, "Failed to initialize the disk!\n");
-		fclose(disk);
-		disk = NULL;
-		return ;
-	}
-	if(bf.st_size == 0)
+	fseek(disk, 0L, SEEK_END);
+	int size = ftell(disk);
+	fseek(disk, 0L, SEEK_SET);
+	if(size == 0)
     	ftruncate(fileno(disk), NUM_BLOCKS*DISK_BLK_SIZE);
 
     num_blocks = NUM_BLOCKS;

@@ -4,20 +4,19 @@
 #include "../shell/commands/commands.h"
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 
-int main(){
-    disk_init("testdiskfile");
+int main(int argc, char* argv[]){
+    disk_init("testdiskfile", "r+");
     if(disk != NULL){
         rfs_format();
         make_rfs("rdx");
         touch("testfile");
-        mkdir("testdir");
-        rfs_unmount();
-        make_rfs("rdx");
-        list();
-        current_working_dir();
-        rfs_unmount();
+        write_file("testfile", "Hello I am Rishabh.");
+        write_file("testfile", "This is USP project");
+        read_file("testfile");
+        list("rdx");
     }
     disk_close();
     return 0;

@@ -53,7 +53,6 @@ void convert_string_to_union(char* data, void *block_data, unsigned long int siz
 }
 
 void seek_inode_block_inode_num(int inode_num, int* disk_block, int* inode_index){
-
 	/*
 		Utility function to seek the block number and inode index given the inode number. 
 	*/

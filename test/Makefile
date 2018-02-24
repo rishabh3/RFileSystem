@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -g -Wall
 OBJDIR = ../bin
 
-all: test
+all: test 
 
 $(OBJDIR)/test.o: test.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -19,8 +19,13 @@ $(OBJDIR)/vrfs.o:
 $(OBJDIR)/commands.o:
 	$(MAKE) -C ../shell/commands/
 
-test: $(OBJDIR)/disk.o $(OBJDIR)/rfsdisk.o $(OBJDIR)/vrfs.o  $(OBJDIR)/test.o $(OBJDIR)/commands.o
+$(OBJDIR)/editor.o:
+	$(MAKE) -C ../editor/
+
+
+test: $(OBJDIR)/disk.o $(OBJDIR)/rfsdisk.o $(OBJDIR)/vrfs.o  $(OBJDIR)/test.o $(OBJDIR)/commands.o 
 	$(CC) $(CFLAGS) -o $@ $^
+	touch testdiskfile
 
 clean:
-	$(RM) test $(OBJDIR)/*.o *~ ../disk/*.gch ../rfsdisk/*.gch ../vrfs/*.gch
+	$(RM) test testdiskfile $(OBJDIR)/*.o *~ ../disk/*.gch ../rfsdisk/*.gch ../vrfs/*.gch

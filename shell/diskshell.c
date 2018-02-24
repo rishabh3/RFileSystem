@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include "commands/commands.h"
 #include "../disk/disk.h"
 #include "../rfsdisk/rfsdisk.h"
@@ -41,7 +45,7 @@ int main(int argc, char *argv[]){
 
         if(line[0]=='\n') continue;
         line[strlen(line)-1] = 0;
-        args = sscanf(line,"%s %s %s",cmd,arg1,arg2);
+        args = sscanf(line,"%s %s %[^\n]",cmd,arg1,arg2);
 		if(args==0) continue;
 
 		if(!strcmp(cmd,"format")) {
@@ -131,6 +135,47 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: mkdir <dirname>\n");
 			}
+		} else if(!strcmp(cmd,"rm")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("rm failed! No disk found!\n");
+			}
+			if(args==2) {
+				strcat(arg1, "\0");
+				rm(arg1);
+			} else {
+				printf("use: rm <filename>\n");
+			}
+		} else if(!strcmp(cmd,"rmdir")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("rmdir failed! No disk found!\n");
+			}
+			if(args==2) {
+				strcat(arg1, "\0");
+				rm_dir(arg1);
+			} else {
+				printf("use: rmdir <filename>\n");
+			}
+		} else if(!strcmp(cmd,"cat")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("cat failed! No disk found!\n");
+			}
+			if(args==2) {
+				strcat(arg1, "\0");
+				read_file(arg1);
+			} else {
+				printf("use: cat <filename>\n");
+			}
+		} else if(!strcmp(cmd,"echo")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("echo failed! No disk found!\n");
+			}
+			if(args==3) {
+				strcat(arg1, "\0");
+				strcat(arg2, "\0");
+				write_file(arg1, arg2);
+			} else {
+				printf("use: echo <data> <filename>\n");
+			}
 		} else if(!strcmp(cmd,"mkfs")) {
 			if(disk == NULL){
 				printf("mkfs failed! No disk found!\n");
@@ -163,7 +208,7 @@ int main(int argc, char *argv[]){
 			}
 		} else if(!strcmp(cmd,"pwd")) {
 			if(disk == NULL){
-				printf("stat failed! No disk found!\n");
+				printf("pwd failed! No disk found!\n");
 			}
 			if(args==1) {
 				current_working_dir();
@@ -205,7 +250,7 @@ int main(int argc, char *argv[]){
 			
 		} else if(!strcmp(cmd,"cls")) {
 			if(args == 1){
-                system("cls");
+                system("clear");
             } 
     	} else if(!strcmp(cmd,"help")) {
 			printf("Commands are:\n");
@@ -239,6 +284,7 @@ int main(int argc, char *argv[]){
 		}
     }
     if(disk != NULL){
+		rfs_unmount();
         disk_close();
         printf("disk unmounted.\n");
     }
