@@ -45,8 +45,9 @@ struct dentry dirdata[MAX_DENTRY];
 int dentry_index;
 /* File Operations */
 int create(char *filename);
-bool read(char *filename, char *data, rsize_t size);
-bool write(char *filename, char *data, rsize_t size);
+int open(char *filename);
+bool readfile(int inodenum, char *data, rsize_t size);
+bool writefile(int inodenum, char *data, rsize_t size);
 bool rm_file(char* filename);
 struct vrfs_stat *stat(char *filename);
 
@@ -56,7 +57,6 @@ int make_directory(char *dirname);
 int remove_directory(char* dirname);
 int read_dir(char *dirname);
 int change_directory(char *dirname);
-int open(char *filename);
 int make_rfs(char *username);
 
 #endif /* VRFS_VRFS_H_ */

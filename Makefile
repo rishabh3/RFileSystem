@@ -3,10 +3,16 @@ CFLAGS = -g -Wall
 OBJDIR = bin
 
 
-all: rshell
+all: rdiskshell 
 
 $(OBJDIR)/disk.o:
 	$(MAKE) -C disk/
+
+$(OBJDIR)/disk.o:
+	$(MAKE) -C disk/
+
+$(OBJDIR)/rfs.o:
+	$(MAKE) -C rfs/
 
 $(OBJDIR)/rfsdisk.o:
 	$(MAKE) -C rfsdisk/
@@ -20,9 +26,15 @@ $(OBJDIR)/commands.o:
 $(OBJDIR)/diskshell.o:
 	$(MAKE) -C shell/
 
-rshell: $(OBJDIR)/disk.o $(OBJDIR)/rfsdisk.o $(OBJDIR)/vrfs.o $(OBJDIR)/diskshell.o $(OBJDIR)/commands.o 
+$(OBJDIR)/diskshell.o:
+	$(MAKE) -C shell/
+
+rmemshell: $(OBJDIR)/memdisk.o $(OBJDIR)/rfs.o $(OBJDIR)/vrfs.o $(OBJDIR)/shell.o $(OBJDIR)/commands.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+rdiskshell: $(OBJDIR)/disk.o $(OBJDIR)/rfsdisk.o $(OBJDIR)/vrfs.o $(OBJDIR)/diskshell.o $(OBJDIR)/commands.o
 	touch diskfile
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	$(RM)  rshell diskfile $(OBJDIR)/*.o *~ memdisk/*.gch disk/*.gch rfs/*.gch rfsdisk/*.gch vrfs/*.gch shell/*.gch shell/commands/*.gch
+	$(RM) rmemshell rdiskshell $(OBJDIR)/*.o *~ diskfile disk/*.gch rfsdisk/*.gch memdisk/*.gch rfs/*.gch vrfs/*.gch shell/*.gch shell/commands/*.gch

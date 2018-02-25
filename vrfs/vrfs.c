@@ -6,7 +6,7 @@
  */
 
 #include "vrfs.h"
-#include "../rfs/rfs.h"
+#include "../rfsdisk/rfsdisk.h"
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
@@ -80,7 +80,7 @@ int make_rfs(char *username){
     else if(t == 2){
         memcpy(rootdirname, username, strlen(username));
         memcpy(current_working_directory, rootdirname, strlen(username));
-        //  strcat(current_working_directory, "/");
+        strcat(current_working_directory, "/");
         rootinode = t-1;
         currentinode = t-1;
         return 1;
@@ -140,17 +140,20 @@ char * present_working_directory(){
 int read_dir(char *dirname){
     // struct dentry dirdata[MAX_DENTRY];
     int loop_var = 0;
-    int current_pos;
+    int current_pos = 0;
     char data[BLK_SIZE];
-    int inode_num;
+    int inode_num, index=0;
     if(!strcmp(dirname, rootdirname)){
         if(!rfs_read(rootinode, data, BLK_SIZE, 0)){
             return 0;
         }
         // readpointer = data;
-        while(data[current_pos] != '\0'){
+        while(current_pos < BLK_SIZE){
             current_pos = loop_var*sizeof(struct dentry);
-            convert_string_to_struct(dirdata+loop_var, data + current_pos, sizeof(struct dentry));
+            if(data[current_pos] != '\0'){
+                convert_string_to_struct(dirdata+index, data + current_pos, sizeof(struct dentry));
+                index++;
+            }
             // readpointer += current_pos;
             loop_var++;
         }
@@ -163,9 +166,12 @@ int read_dir(char *dirname){
                 return 0;
             }
             // readpointer = data;
-            while(data[current_pos] != '\0'){
+            while(current_pos < BLK_SIZE){
                 current_pos = loop_var*sizeof(struct dentry);
-                convert_string_to_struct(dirdata+loop_var, data + current_pos, sizeof(struct dentry));
+                if(data[current_pos] != '\0'){
+                    convert_string_to_struct(dirdata+index, data + current_pos, sizeof(struct dentry));
+                    index++;
+                }
                 // readpointer += current_pos;
                 loop_var++;
             }
@@ -173,11 +179,76 @@ int read_dir(char *dirname){
         else{
             return 0;
         }
+        currentinode = inode_num;
     }
-    dentry_index = loop_var;
-    currentinode = inode_num;
+    dentry_index = index;
     return 1;
     // return NULL;
+}
+
+void delete_dentry(int inodenum){
+    for(int i = 0;i < dentry_index; i++){
+        if(dirdata[i].inode_num == inodenum){
+            int j = dentry_index -1;
+            struct dentry temp = dirdata[i];
+            dirdata[i] = dirdata[j];
+            dirdata[j] = temp;
+            dentry_index--;
+            memset(dirdata[j].name, '\0', MAX_SIZE);
+            dirdata[j].inode_num = -1;
+            break;
+        }
+    }
+}
+
+int remove_directory(char* dirname){
+    int inodenum;
+    if(validate_dirname(dirname, &inodenum)){
+        char data[BLK_SIZE];
+        if(!rfs_read(inodenum, data, BLK_SIZE, 0)){
+            fprintf(stderr, "Error reading directory\n");
+            return 0;
+        }
+        int loop_var = 0;
+        int current_pos = 0;
+        int count = 0;
+        while(current_pos < BLK_SIZE){
+            current_pos = loop_var*sizeof(struct dentry);
+            if(data[current_pos] != '\0'){
+                count++;
+            }
+            // readpointer += current_pos;
+            loop_var++;
+        }
+        if(count == 2){
+            //Delete the directory.
+            if(!rfs_delete(inodenum)){
+                fprintf(stderr,"Failed to delete directory: rfs_delete failed.\n");
+                return 0;
+            }
+            /*
+                Delete the directory entry and save it in current directory.
+                We need to modify the current settings.
+            */
+            char datab[sizeof(struct dentry)];
+            rfs_update(currentinode);
+            delete_dentry(inodenum);
+            for(int i = 0;i < dentry_index; i++){
+                memset(datab, '\0', sizeof(struct dentry));
+                convert_struct_to_string(datab, &dirdata[i], sizeof(struct dentry));
+                if(!rfs_write(currentinode, datab, sizeof(struct dentry), 0)){
+                    fprintf(stderr, "Error during write\n");
+                }
+            }
+            return 1;
+        }
+        else{
+            fprintf(stderr, "Cannot delete directory!Directory not empty.\n");
+            return 0;
+        }
+    }
+    fprintf(stderr, "No such directory.\n");
+    return 0;
 }
 
 struct vrfs_stat *stat(char *filename){
@@ -210,74 +281,37 @@ struct vrfs_stat *stat(char *filename){
 }
 
 //implementing the read system call
-bool read(char *filename,char *data,size_t size){
-    //checking if a filename is provided    
-    if(filename == NULL){
-        fprintf(stderr,"Please specify a filename.\n");
-        return FALSE;
-    }
+bool readfile(int inodenum,char *data,size_t size){
     //checking if a buffer is provided
     if(data == NULL){
         fprintf(stderr,"Please provide a valid buffer to write into.\n");
         return FALSE;
     }
-    //fetching the required inode.
-    struct dentry result[MAX_DENTRY];
-    int len;
-    read_dir(current_working_directory);
-    if(len == 0){
-        fprintf(stderr,"Failed to read directory\n");
+    //reading from the file
+	if(!rfs_read(inodenum,data,size,0)){
+        fprintf(stderr,"Error in read(). rfs_read exited unsuccessfully\n");
         return FALSE;
     }
-    else{
-        for(int i=0;i<len;i++){
-            if(!strcmp(result[i].name,filename)){
-                if(!rfs_read(result[i].inode_num,data,size,0)){
-                    fprintf(stderr,"Error in read(). rfs_read exited unsuccessfully\n");
-                    return FALSE;
-                }
-                return TRUE;
-            }
-        }
-        fprintf(stderr,"Filename does not match any valid inode.\n");
-        return FALSE;
-    }
+    return TRUE;
 }
 
 //implementing the write system call
-bool write(char *filename,char *data,size_t size){
-    //checking if filename is provided
-    if(filename == NULL){
-        fprintf(stderr,"Please specify a filename to use.\n");
-        return FALSE;
-    }
+bool writefile(int inodenum,char *data,size_t size){
     //checking if a valid buffer is provided
     if(data == NULL){
         fprintf(stderr,"Please provide a valid buffer to read from\n");
         return FALSE;
     }
     //obtaining the required inode
-    struct dentry result[MAX_DENTRY];
-    int len;
-    read_dir(current_working_directory);
-    if(len == 0){
-        fprintf(stderr,"Failed to read directory\n");
+    if(!rfs_write(inodenum,data,size,0)){
+        fprintf(stderr,"Error in write(). rfs_write exited unsuccessfully\n");
         return FALSE;
     }
-    else{
-        for(int i=0;i<len;i++){
-            if(!strcmp(result[i].name,filename)){
-                if(!rfs_write(result[i].inode_num,data,size,0)){
-                    fprintf(stderr,"Error in write(). rfs_write exited unsuccessfully\n");
-                    return FALSE;
-                }
-                return TRUE;
-            }
-        }
-        fprintf(stderr,"Filename does not match any valid inode.\n");
-        return FALSE;
-    } 
+    return TRUE;
 }
+
+
+
 //function to remove a file from the fs. returns 1 if successful, 0 if failed
 bool rm_file(char *filename){
     //check for a filename provided
@@ -290,26 +324,36 @@ bool rm_file(char *filename){
     * basically we find the inode and set the isvalid = 0
     * scan through the blocks and set the inuse bits to 0
     */
-    int size;
-    struct dentry result[MAX_DENTRY];
-    read_dir(current_working_directory);
-    if(!size){
-        fprintf(stderr,"Failed to read directory.\n");
+    int inode_num;
+	if(!validate_dirname(filename, &inode_num)){
+		fprintf(stderr, "No such file named %s exists\n", filename);
+		return FALSE;	
+	}
+    struct vrfs_stat* stat_ptr;
+    stat_ptr = stat(filename);
+    if(stat_ptr->type == DIR_TYPE){
+        fprintf(stderr, "Cannot delete a directory\n");
         return FALSE;
     }
-    else{
-        for(int i=0;i<size;i++){
-            if(!strcmp(result[i].name,filename)){
-                if(!rfs_delete(result[i].inode_num)){
-                    fprintf(stderr,"Failed to delete file: rfs_delete failed.\n");
-                    return FALSE;
-                }
-                return TRUE;
-            }
+	if(!rfs_delete(inode_num)){
+        fprintf(stderr,"Failed to delete file: rfs_delete failed.\n");
+        return FALSE;
+    }
+	/*
+		Delete the directory entry and save it in current directory.
+		We need to modify the current settings.
+	*/
+    char data[sizeof(struct dentry)];
+    delete_dentry(inode_num);
+    rfs_update(currentinode);
+    for(int i = 0;i < dentry_index; i++){
+        memset(data, '\0', sizeof(struct dentry));
+        convert_struct_to_string(data, &dirdata[i], sizeof(struct dentry));
+        if(!rfs_write(currentinode, data, sizeof(struct dentry), 0)){
+            fprintf(stderr, "Error during write\n");
         }
-        fprintf(stderr,"Failed to delete file: %s does not exist.\n",filename);
-        return FALSE;
     }
+	return TRUE;
 }
 
 int get_inode_num_name(){

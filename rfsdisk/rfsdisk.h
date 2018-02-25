@@ -73,6 +73,6 @@ int rfs_getattr(int inode_num,char *data);
 
 int rfs_read(int inode_num,char *data,int length,int offset); //read data of 'length' bytes from an offset from an inode
 int rfs_write(int inode_num,char *data,int length,int offset); //write data of 'length' bytes from an offset
-
+int rfs_update(int inodenum);
 int rfs_unmount(); // Unmounts the filesystem and closes the connection to the disk.
 #endif /* RFS_RFS_H_ */
