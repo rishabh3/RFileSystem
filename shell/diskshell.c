@@ -58,22 +58,10 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: format\n");
 			}
-		} else if(!strcmp(cmd,"mount")) {
-			if(disk_mounted == FALSE || disk == NULL){
-				printf("mount failed! No disk found!\n");
-			}
-			if(args==1) {
-				if(make_rfs(argv[1])) {
-					printf("disk mounted.\n");
-				} else {
-					printf("mount failed!\n");
-				}
-			} else {
-				printf("use: mount\n");
-			}
 		} else if(!strcmp(cmd,"cd")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("mount failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				if(!cd(arg1)) {
@@ -85,6 +73,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"unmount")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("unmount failed! No disk found!\n");
+				continue;
 			}
 			if(args==1) {
 				if(rfs_unmount()) {
@@ -101,6 +90,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"debug")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("debug failed! No disk found!\n");
+				continue;
 			}
 			if(args==1) {
 				rfs_debug();
@@ -110,6 +100,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"ls")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("ls failed! No disk found!\n");
+				continue;
 			}
 			if(args==1) {
 				list(argv[1]);
@@ -119,6 +110,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"touch")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("touch failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				touch(arg1);
@@ -138,6 +130,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"rm")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("rm failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				strcat(arg1, "\0");
@@ -148,6 +141,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"rmdir")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("rmdir failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				strcat(arg1, "\0");
@@ -158,6 +152,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"cat")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("cat failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				strcat(arg1, "\0");
@@ -168,6 +163,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"echo")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("echo failed! No disk found!\n");
+				continue;
 			}
 			if(args==3) {
 				strcat(arg1, "\0");
@@ -179,6 +175,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"mkfs")) {
 			if(disk == NULL){
 				printf("mkfs failed! No disk found!\n");
+				continue;
 			}
 			if(args==1) {
 				if(!make_rfs(argv[1])){
@@ -198,6 +195,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"stat")) {
 			if(disk == NULL){
 				printf("stat failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				if(!stat_file(arg1)){
@@ -209,6 +207,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd,"pwd")) {
 			if(disk == NULL){
 				printf("pwd failed! No disk found!\n");
+				continue;
 			}
 			if(args==1) {
 				current_working_dir();
@@ -218,6 +217,7 @@ int main(int argc, char *argv[]){
 		} else if(!strcmp(cmd, "disksize")){
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("disksize failed! No disk found!\n");
+				continue;
 			}
             if(args == 1){
                 result = disk_size();
@@ -235,6 +235,7 @@ int main(int argc, char *argv[]){
         } else if(!strcmp(cmd,"getsize")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("getsize failed! No disk found!\n");
+				continue;
 			}
 			if(args==2) {
 				inumber = atoi(arg1);
@@ -255,7 +256,6 @@ int main(int argc, char *argv[]){
     	} else if(!strcmp(cmd,"help")) {
 			printf("Commands are:\n");
 			printf("    format\n");
-			printf("    mount\n");
             printf("    unmount\n");
 			printf("    debug\n");
 			printf("    cat     <file>\n");
