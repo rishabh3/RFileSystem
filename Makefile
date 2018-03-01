@@ -3,13 +3,13 @@ CFLAGS = -g -Wall
 OBJDIR = bin
 
 
-all: rdiskshell 
+all: rdiskshell
 
 $(OBJDIR)/disk.o:
 	$(MAKE) -C disk/
 
-$(OBJDIR)/disk.o:
-	$(MAKE) -C disk/
+$(OBJDIR)/memdisk.o:
+	$(MAKE) -C memdisk/
 
 $(OBJDIR)/rfs.o:
 	$(MAKE) -C rfs/
@@ -23,7 +23,7 @@ $(OBJDIR)/vrfs.o:
 $(OBJDIR)/commands.o:
 	$(MAKE) -C shell/commands/
 
-$(OBJDIR)/diskshell.o:
+$(OBJDIR)/shell.o:
 	$(MAKE) -C shell/
 
 $(OBJDIR)/diskshell.o:
