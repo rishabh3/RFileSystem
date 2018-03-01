@@ -16,6 +16,6 @@ make clean
 To clean up after the project.
 
 #### Contributors
-Rishabh Dutt
-Ravi Shreyas Anupindi
-Rajat Nigam
+* Rishabh Dutt
+* Ravi Shreyas Anupindi
+* Rajat Nigam
