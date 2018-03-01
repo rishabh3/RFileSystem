@@ -3,7 +3,7 @@
 ## Project for the Unix Systems Programming Lab(UE15CS355)
 
 ### Instructions to run
-Clone the repository. Run the following commands from inside the root of the project:
+Clone the repository. Make a directory named **bin** in project root folder. Run the following commands from inside the root of the project:
 ```
 make
 ./rdiskshell <user_name>
