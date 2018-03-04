@@ -88,9 +88,43 @@ int make_rfs(char *username){
     return 0;
 }
 
+void change_name(char* oldname, char *newname){
+	for(int i = 0;i < dentry_index;i++){
+		if(!strcmp(dirdata[i].name, oldname)){
+			memset(dirdata[i].name, '\0', MAX_SIZE);
+            memcpy(dirdata[i].name, newname, strlen(newname));
+            break;
+		}
+	}
+}
 
+int re_name(char* old_filename, char* new_filename){
+	// Rename the file or folder to a new name
+	int inode_num;
+	if(!validate_dirname(old_filename, &inode_num)){
+		fprintf(stderr, "Error renaming the file %s\n", old_filename);
+		return 0;	
+	}
+	change_name(old_filename, new_filename);
+    char datab[sizeof(struct dentry)];
+    int offset = 1;
+    for(int i = 0;i < dentry_index; i++){
+        memset(datab, '\0', sizeof(struct dentry));
+        convert_struct_to_string(datab, &dirdata[i], sizeof(struct dentry));
+        if(!rfs_write(currentinode, datab, sizeof(struct dentry), offset)){
+            fprintf(stderr, "Error during write\n");
+        }
+        offset = 0;
+    }
+    return 1;
+}
 
 int create(char *filename){
+    int inode;
+    if(validate_dirname(filename, &inode)){
+        fprintf(stderr, "File with name %s already exists. Cannot create the file.\n", filename);
+        return 0;
+    }
     unsigned long int seconds;
     seconds = time(NULL);
     int inode_num;
@@ -125,6 +159,13 @@ int open(char *filename){
     int inode_num;
     if(validate_dirname(filename, &inode_num)){
         return inode_num;
+    }
+    else{
+        // If file doesnot exists then create and then open.
+        create(filename);
+        if(validate_dirname(filename, &inode_num)){
+            return inode_num;
+        }
     }
     return -1;
 }
@@ -310,7 +351,26 @@ bool writefile(int inodenum,char *data,size_t size){
     return TRUE;
 }
 
-
+int copy(char* source_file, char* destination_file){
+    int inode_num;
+    if(!validate_dirname(source_file, &inode_num)){
+        fprintf(stderr, "File %s doesnot exists.Copy failed\n", source_file);
+        return 0;
+    }
+    struct vrfs_stat* stat_ptr;
+    stat_ptr = stat(source_file);
+    if(stat_ptr->type == DIR_TYPE){
+        fprintf(stderr, "Cannot copy a directory\n");
+        return 0;
+    }
+    char data[DATA_BLK_SIZE];
+    strcat(data, "\0");
+    readfile(inode_num, data, DATA_BLK_SIZE);
+    int length = strlen(data);
+    inode_num = open(destination_file);
+    writefile(inode_num, data, length);
+    return 1;
+}
 
 //function to remove a file from the fs. returns 1 if successful, 0 if failed
 bool rm_file(char *filename){
@@ -361,6 +421,11 @@ int get_inode_num_name(){
 }
 
 int make_directory(char* dirname){
+    int inode_numb;
+    if(validate_dirname(dirname, &inode_numb)){
+        fprintf(stderr, "Folder with name %s already exists. Cannot create the Folder.\n", dirname);
+        return 0;
+    }
     struct dentry newdir;
     int numb_inode;
     char data[BUFFER_SIZE];

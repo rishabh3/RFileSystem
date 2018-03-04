@@ -89,7 +89,7 @@ int rm(char* filename){
 }
 
 int read_file(char *filename){
-    char data[DATA_SIZE];
+    char data[DATA_BLOCK_SIZE];
     int inode_num;
     struct vrfs_stat* statbuf =  stat(filename);
     if(statbuf->type == DIR_TYPE){
@@ -100,12 +100,26 @@ int read_file(char *filename){
         fprintf(stderr, "No such file!\n");
         return 0;
     }
-    if(!readfile(inode_num, data, DATA_SIZE)){
+    if(!readfile(inode_num, data, DATA_BLOCK_SIZE)){
         fprintf(stderr, "Read from file %s failed!\n", filename);
         return 0;
     }
     fprintf(stdout, "%s", data);
     fprintf(stdout, "\n");
+    return 1;
+}
+
+int cp_file(char *src, char *dest){
+    if(!copy(src, dest)){
+        return 0;
+    }
+    return 1;
+}
+
+int mv(char *old, char* new){
+    if(!re_name(old, new)){
+        return 0;
+    }
     return 1;
 }
 

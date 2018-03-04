@@ -172,6 +172,30 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: echo <data> <filename>\n");
 			}
+		} else if(!strcmp(cmd,"cp")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("cp failed! No disk found!\n");
+				continue;
+			}
+			if(args==3) {
+				strcat(arg1, "\0");
+				strcat(arg2, "\0");
+				cp_file(arg1, arg2);
+			} else {
+				printf("use: cp <srcfile> <destfile>\n");
+			}
+		} else if(!strcmp(cmd,"mv")) {
+			if(disk_mounted == FALSE || disk == NULL){
+				printf("mv failed! No disk found!\n");
+				continue;
+			}
+			if(args==3) {
+				strcat(arg1, "\0");
+				strcat(arg2, "\0");
+				mv(arg1, arg2);
+			} else {
+				printf("use: mv <oldname> <newname>\n");
+			}
 		} else if(!strcmp(cmd,"mkfs")) {
 			if(disk == NULL){
 				printf("mkfs failed! No disk found!\n");
@@ -257,8 +281,10 @@ int main(int argc, char *argv[]){
 			printf("Commands are:\n");
 			printf("    format\n");
             printf("    unmount\n");
+			printf("	cp <src> <dest>");
+			printf(" 	mv <oldfilename> <newfilename>");
 			printf("    debug\n");
-			printf("    cat     <file>\n");
+			printf("    cat <file>\n");
 			printf("    ls <dir>\n");
 			printf("    pwd\n");
             printf("    mkdir <dirname>\n");

@@ -659,7 +659,8 @@ int rfs_write(int inode_num,char *data,int length,int offset){
 			current_inode->direct[loop_var] = next_block_num;
 		}
 		else{
-			if(d_block.buffer[0] == '\0'){
+			if(offset == 1 || d_block.buffer[0] == '\0'){
+				memset(d_block.buffer, '\0', fetch_size);
 				memcpy(d_block.buffer, data + c_ptr, bytes_written);
 			}
 			else{

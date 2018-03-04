@@ -14,6 +14,7 @@
 #define MAX_DENTRY 25
 
 #define NUM_DIRECT 1 << 2
+#define DATA_BLK_SIZE (NUM_DIRECT)*4096
 
 struct timest{
     unsigned long int ctime; // When the particular inode was changed. Stored in Epoch
@@ -50,7 +51,8 @@ bool readfile(int inodenum, char *data, rsize_t size);
 bool writefile(int inodenum, char *data, rsize_t size);
 bool rm_file(char* filename);
 struct vrfs_stat *stat(char *filename);
-
+int re_name(char* old_name, char* new_name);
+int copy(char* source_file, char* destination_file);
 /*Directory Operations*/
 char* present_working_directory();
 int make_directory(char *dirname);
