@@ -13,8 +13,8 @@
 
 #define DISK_BLK_SIZE 4096 // Disk Block Size
 #define NUM_BLOCKS 100// Total Disk Size
-#define NUM_INODE_BLOCKS (0.1*(NUM_BLOCKS))
-#define NUM_D_BLOCKS ((NUM_BLOCKS) - (NUM_INODE_BLOCKS))
+#define NUM_INODE_BLOCKS (0.1*(NUM_BLOCKS)) //sets the number of inode blocks to 10% of total blocks
+#define NUM_D_BLOCKS ((NUM_BLOCKS) - (NUM_INODE_BLOCKS)) //defines the number of data blocks
 #define READ 1 // Flags for read
 #define WRITE 2 // Flags for write
 #define DATA_SIZE  (DISK_BLK_SIZE) // Macro for size of data to write or read from disk.

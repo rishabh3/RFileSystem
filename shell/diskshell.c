@@ -37,6 +37,12 @@ int main(int argc, char *argv[]){
         return -1;
     }
     printf("opened file emulated disk image.\n");
+	/*
+	* Shell interaction begins here.
+	* Each command is implemented as a callback to the VRFS level functionality.
+	* The prompt to the shell is updated by referencing the current working directory
+	* stored in the buffer.
+	*/
     while(1){
         printf("rfs%s> ", dirpath);
         fflush(stdout);
@@ -48,6 +54,7 @@ int main(int argc, char *argv[]){
         args = sscanf(line,"%s %s %[^\n]",cmd,arg1,arg2);
 		if(args==0) continue;
 
+		//format command
 		if(!strcmp(cmd,"format")) {
 			if(args==1) {
 				if(rfs_format()) {
@@ -58,7 +65,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: format\n");
 			}
-		} else if(!strcmp(cmd,"cd")) {
+		} 
+		// cd command
+		else if(!strcmp(cmd,"cd")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("mount failed! No disk found!\n");
 				continue;
@@ -70,7 +79,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: cd <dirname>\n");
 			}
-		} else if(!strcmp(cmd,"unmount")) {
+		} 
+		//unmount command
+		else if(!strcmp(cmd,"unmount")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("unmount failed! No disk found!\n");
 				continue;
@@ -87,7 +98,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: unmount\n");
 			}
-		} else if(!strcmp(cmd,"debug")) {
+		} 
+		//debug command
+		else if(!strcmp(cmd,"debug")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("debug failed! No disk found!\n");
 				continue;
@@ -97,7 +110,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: debug\n");
 			}
-		} else if(!strcmp(cmd,"ls")) {
+		} 
+		//ls command
+		else if(!strcmp(cmd,"ls")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("ls failed! No disk found!\n");
 				continue;
@@ -107,7 +122,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: ls\n");
 			}
-		} else if(!strcmp(cmd,"touch")) {
+		} 
+		//touch command
+		else if(!strcmp(cmd,"touch")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("touch failed! No disk found!\n");
 				continue;
@@ -117,7 +134,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: touch <file>\n");
 			}
-		} else if(!strcmp(cmd,"mkdir")) {
+		} 
+		//mkdir command
+		else if(!strcmp(cmd,"mkdir")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("mkdir failed! No disk found!\n");
 			}
@@ -127,7 +146,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: mkdir <dirname>\n");
 			}
-		} else if(!strcmp(cmd,"rm")) {
+		} 
+		//rm command
+		else if(!strcmp(cmd,"rm")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("rm failed! No disk found!\n");
 				continue;
@@ -138,7 +159,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: rm <filename>\n");
 			}
-		} else if(!strcmp(cmd,"rmdir")) {
+		} 
+		//rmdir command
+		else if(!strcmp(cmd,"rmdir")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("rmdir failed! No disk found!\n");
 				continue;
@@ -149,7 +172,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: rmdir <filename>\n");
 			}
-		} else if(!strcmp(cmd,"cat")) {
+		} 
+		//cat command
+		else if(!strcmp(cmd,"cat")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("cat failed! No disk found!\n");
 				continue;
@@ -160,7 +185,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: cat <filename>\n");
 			}
-		} else if(!strcmp(cmd,"echo")) {
+		} 
+		//echo command
+		else if(!strcmp(cmd,"echo")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("echo failed! No disk found!\n");
 				continue;
@@ -172,7 +199,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: echo <data> <filename>\n");
 			}
-		} else if(!strcmp(cmd,"cp")) {
+		} 
+		//cp command
+		else if(!strcmp(cmd,"cp")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("cp failed! No disk found!\n");
 				continue;
@@ -184,7 +213,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: cp <srcfile> <destfile>\n");
 			}
-		} else if(!strcmp(cmd,"mv")) {
+		} 
+		//mv command
+		else if(!strcmp(cmd,"mv")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("mv failed! No disk found!\n");
 				continue;
@@ -196,7 +227,9 @@ int main(int argc, char *argv[]){
 			} else {
 				printf("use: mv <oldname> <newname>\n");
 			}
-		} else if(!strcmp(cmd,"mkfs")) {
+		} 
+		//mkfs command
+		else if(!strcmp(cmd,"mkfs")) {
 			if(disk == NULL){
 				printf("mkfs failed! No disk found!\n");
 				continue;
@@ -216,7 +249,9 @@ int main(int argc, char *argv[]){
 				printf("use: mkfs\n");
 			}
             count++;
-		} else if(!strcmp(cmd,"stat")) {
+		} 
+		//stat command
+		else if(!strcmp(cmd,"stat")) {
 			if(disk == NULL){
 				printf("stat failed! No disk found!\n");
 				continue;
@@ -228,7 +263,9 @@ int main(int argc, char *argv[]){
             } else {
 				printf("use: stat <filename>\n");
 			}
-		} else if(!strcmp(cmd,"pwd")) {
+		} 
+		//pwd command
+		else if(!strcmp(cmd,"pwd")) {
 			if(disk == NULL){
 				printf("pwd failed! No disk found!\n");
 				continue;
@@ -238,7 +275,9 @@ int main(int argc, char *argv[]){
             } else {
 				printf("use: pwd\n");
 			}
-		} else if(!strcmp(cmd, "disksize")){
+		} 
+		//disksize command
+		else if(!strcmp(cmd, "disksize")){
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("disksize failed! No disk found!\n");
 				continue;
@@ -256,7 +295,9 @@ int main(int argc, char *argv[]){
             else{
                 printf("use: disksize\n");
             }
-        } else if(!strcmp(cmd,"getsize")) {
+        } 
+		//getsize command
+		else if(!strcmp(cmd,"getsize")) {
 			if(disk_mounted == FALSE || disk == NULL){
 				printf("getsize failed! No disk found!\n");
 				continue;
@@ -273,11 +314,15 @@ int main(int argc, char *argv[]){
 				printf("use: getsize <inumber>\n");
 			}
 			
-		} else if(!strcmp(cmd,"cls")) {
+		}
+		//cls command
+		 else if(!strcmp(cmd,"cls")) {
 			if(args == 1){
                 system("clear");
             } 
-    	} else if(!strcmp(cmd,"help")) {
+    	} 
+		//help command: lists all available commands
+		else if(!strcmp(cmd,"help")) {
 			printf("Commands are:\n");
 			printf("    format\n");
             printf("    unmount\n");
@@ -297,13 +342,19 @@ int main(int argc, char *argv[]){
 			printf("    help\n");
 			printf("    quit\n");
 			printf("    exit\n");
-		} else if(!strcmp(cmd,"quit")) {
+		}
+		// quit the shell
+		 else if(!strcmp(cmd,"quit")) {
             printf("Bye\n");
 			break;
-		} else if(!strcmp(cmd,"exit")) {
+		} 
+		//exit the shell, same as quit
+		else if(!strcmp(cmd,"exit")) {
             printf("Bye\n");
 			break;
-		} else {
+		} 
+		//catch all
+		else {
 			printf("unknown command: %s\n",cmd);
 			printf("type 'help' for a list of commands.\n");
 			result = 1;
